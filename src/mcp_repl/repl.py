@@ -18,12 +18,35 @@ from rich.console import Group
 from rich.syntax import Syntax
 from rich.prompt import Confirm
 import uuid
-
+import logging
+from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
+from pydantic import BaseModel
+class CustomRailwayLogFormatter(logging.Formatter):
+    def format(self, record):
+        log_record = {
+            "time": self.formatTime(record),
+            "level": record.levelname,
+            "message": record.getMessage()
+        }
+        return json.dumps(log_record)
+
+def get_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler()
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+    formatter = CustomRailwayLogFormatter()
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+logger = get_logger()
 
 load_dotenv()
 
@@ -453,43 +476,41 @@ class MCPClient:
         """Clean up resources"""
         await self.llm_client.cleanup()
 
+class MCPServerConfig(BaseModel):
+    """Represents an MCP server"""
+
+    path: str
+    name: str
+    description: str
 
 async def main():
     parser = argparse.ArgumentParser(description="MCP Client")
     parser.add_argument("--config", type=str, help="Path to config file")
     args = parser.parse_args()
 
-    server_paths = []
+    servers = []
 
-    # Load server paths from config file if provided
     if args.config:
         try:
             with open(args.config, "r") as f:
                 config = json.load(f)
-                if "servers" in config and isinstance(config["servers"], list):
-                    server_paths.extend(config["servers"])
-                else:
-                    print(
-                        "Warning: Config file does not contain a valid 'servers' list"
-                    )
+                for server in config:
+                    server["path"] = str((Path(args.config).parent / server["path"]).resolve())
+                    servers.append(MCPServerConfig(**server))
         except (json.JSONDecodeError, FileNotFoundError) as e:
             print(f"Error loading config file: {e}")
             sys.exit(1)
 
-    if not server_paths:
-        print(
-            "Error: No server paths provided in config file."
-        )
-        print(
-            "Usage: python client.py --config config.json"
-        )
+    if not servers:
+        print("Error: No servers provided in config file.")
+        print("Usage: python client.py --config config.json")
         sys.exit(1)
 
     client = MCPClient()
     try:
-        # Connect to all provided server scripts
-        for server_path in server_paths:
-            await client.connect_to_server(server_path)
+        logger.info("Connecting to servers...")
+        for server in servers:
+            await client.connect_to_server(server.path)
         await client.chat_loop()
     finally:
         await client.cleanup()
