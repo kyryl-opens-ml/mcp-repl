@@ -30,3 +30,11 @@ test = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mcp-repl",
+]
+
+[tool.uv.sources]
+mcp-repl = { workspace = true }

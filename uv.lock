@@ -349,7 +349,7 @@ cli = [
 
 [[package]]
 name = "mcp-repl"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -371,6 +371,11 @@ test = [
     { name = "pytest" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "mcp-repl" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.13" },
@@ -385,6 +390,9 @@ requires-dist = [
     { name = "redis", marker = "extra == 'databases'", specifier = ">=5.2.1" },
     { name = "ruff", specifier = ">=0.9.9" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "mcp-repl", editable = "." }]
 
 [[package]]
 name = "mdurl"

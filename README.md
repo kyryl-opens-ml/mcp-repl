@@ -29,34 +29,13 @@ cd mcp-repl
 uv venv
 ```
 
-## Usage
-
-Start the REPL:
-
-```bash
-python -m src.mcp_repl.repl --config path/to/config.json
-```
-
-### Optional Flags
-
-- `--auto-approve-tools`: Automatically approve all tool executions
-- `--always-show-full-output`: Always display complete tool outputs
-- `--chat-history-dir PATH`: Directory to save chat history (default: `./chat_history`)
-
-### Example
-
-```bash
-python -m src.mcp_repl.repl --config examples/databases/config.json --auto-approve-tools
-```
-
 ## Databases Example
 
-The repository provides a comprehensive example demonstrating how to interact simultaneously with multiple database services (PostgreSQL, MySQL, Redis). This example covers:
+This example demonstrates how you can:
 
-1. Setting up a local Kubernetes cluster
-2. Generating mock data
-3. Creating MCP servers for each database
-4. Querying multiple databases from a single REPL interface
+- Set up 3 databases (PostgreSQL, MySQL, Redis) in Kubernetes with mock data
+- Run MCP servers for each dataset
+- Interact with all databases from a single REPL
 
 ### Key Features
 
@@ -91,6 +70,20 @@ You can perform queries like:
 - "Find all tables in PostgreSQL and MySQL"
 - "Compare the structure of the 'users' table in PostgreSQL with the 'customers' table in MySQL"
 - "Count the number of records in each database"
+
+## Usage
+
+Start the REPL:
+
+```bash
+python -m src.mcp_repl.repl --config path/to/config.json
+```
+
+### Optional Flags
+
+- `--auto-approve-tools`: Automatically approve all tool executions
+- `--always-show-full-output`: Always display complete tool outputs
+- `--chat-history-dir PATH`: Directory to save chat history (default: `./chat_history`)
 
 ## Testing
 
