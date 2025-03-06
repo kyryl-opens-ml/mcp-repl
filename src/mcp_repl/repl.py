@@ -29,9 +29,10 @@ class CustomLogFormatter(logging.Formatter):
         log_record = {
             "time": self.formatTime(record),
             "level": record.levelname,
-            "message": record.getMessage()
+            "message": record.getMessage(),
         }
         return json.dumps(log_record)
+
 
 def get_logger():
     logger = logging.getLogger()
@@ -43,6 +44,7 @@ def get_logger():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     return logger
+
 
 logger = get_logger()
 
@@ -61,7 +63,13 @@ kb = KeyBindings()
 class RichUI:
     """Handles the Rich UI components and user interaction"""
 
-    def __init__(self, llm_client: LLMClient, mcp_client: MCPOrchestrator, auto_approve_tools=False, always_show_full_output=False):
+    def __init__(
+        self,
+        llm_client: LLMClient,
+        mcp_client: MCPOrchestrator,
+        auto_approve_tools=False,
+        always_show_full_output=False,
+    ):
         self.llm_client = llm_client
         self.mcp_client = mcp_client
         self.console = Console()
@@ -69,10 +77,10 @@ class RichUI:
         self.always_show_full_output = always_show_full_output
         self.chat_id = str(uuid.uuid4())  # Generate a unique ID for this chat session
         self.chat_file = f"chat_history/{self.chat_id}.json"
-        
+
         # Create chat history directory if it doesn't exist
         os.makedirs("chat_history", exist_ok=True)
-        
+
         # Initialize the chat history file with an empty list
         with open(self.chat_file, "w") as f:
             json.dump([], f)
@@ -103,9 +111,11 @@ class RichUI:
         """Ask for confirmation to execute a tool"""
         # If auto-approve is enabled, return True without asking
         if self.auto_approve_tools:
-            self.console.print(f"[bold yellow]Auto-approving tool execution: {tool_name}[/bold yellow]")
+            self.console.print(
+                f"[bold yellow]Auto-approving tool execution: {tool_name}[/bold yellow]"
+            )
             return True
-            
+
         tool_args_str = str(tool_args)
         confirmation_text = Group(
             Text("🛠️  Tool Execution Request", style="bold white"),
@@ -216,14 +226,16 @@ class RichUI:
     def print_tool_cancelled(self):
         """Print tool cancelled message"""
         self.console.print("[bold red]Tool call cancelled by user[/bold red]")
-        
+
     def debug_and_save_chat_history(self):
         try:
             with open(self.chat_file, "w") as f:
                 json.dump(self.llm_client.chat_history, f, indent=2, default=str)
         except Exception as e:
-            self.console.print(f"[bold red]Error saving chat history: {str(e)}[/bold red]")
-            
+            self.console.print(
+                f"[bold red]Error saving chat history: {str(e)}[/bold red]"
+            )
+
     async def process_query(self, query: str):
         """Process a query using Claude and available tools"""
         # Add the new user message to chat history
@@ -236,7 +248,9 @@ class RichUI:
         while True:
             # Show status indicator for API call
             with self.console.status("[bold green]Processing query...[/bold green]"):
-                response = await self.llm_client.get_llm_response(self.mcp_client.available_tools)
+                response = await self.llm_client.get_llm_response(
+                    self.mcp_client.available_tools
+                )
 
             # Track if any tool was used in this turn
             tool_used = False
@@ -275,7 +289,7 @@ class RichUI:
 
                         # Add tool result to chat history
                         await self.llm_client.add_tool_result(tool_use_id, result)
-                        
+
                         # Debug and save chat history after tool result
                         self.debug_and_save_chat_history()
                     else:
@@ -333,6 +347,7 @@ class RichUI:
         """Clean up resources"""
         await self.llm_client.cleanup()
 
+
 class MCPServerConfig(BaseModel):
     """Represents an MCP server"""
 
@@ -340,13 +355,20 @@ class MCPServerConfig(BaseModel):
     name: str
     description: str
 
+
 async def main():
     parser = argparse.ArgumentParser(description="MCP Client")
     parser.add_argument("--config", type=str, help="Path to config file")
-    parser.add_argument("--auto-approve-tools", action="store_true", 
-                        help="Automatically approve all tool executions without prompting")
-    parser.add_argument("--always-show-full-output", action="store_true",
-                        help="Always show full tool output without truncating or prompting")
+    parser.add_argument(
+        "--auto-approve-tools",
+        action="store_true",
+        help="Automatically approve all tool executions without prompting",
+    )
+    parser.add_argument(
+        "--always-show-full-output",
+        action="store_true",
+        help="Always show full tool output without truncating or prompting",
+    )
     args = parser.parse_args()
 
     servers = []
@@ -356,7 +378,9 @@ async def main():
             with open(args.config, "r") as f:
                 config = json.load(f)
                 for server in config:
-                    server["path"] = str((Path(args.config).parent / server["path"]).resolve())
+                    server["path"] = str(
+                        (Path(args.config).parent / server["path"]).resolve()
+                    )
                     servers.append(MCPServerConfig(**server))
         except (json.JSONDecodeError, FileNotFoundError) as e:
             print(f"Error loading config file: {e}")
@@ -370,16 +394,19 @@ async def main():
     # Initialize the clients
     llm_client = LLMClient()
     mcp_orchestrator = MCPOrchestrator()
-    ui = RichUI(llm_client, mcp_orchestrator, 
-                auto_approve_tools=args.auto_approve_tools,
-                always_show_full_output=args.always_show_full_output)
-    
+    ui = RichUI(
+        llm_client,
+        mcp_orchestrator,
+        auto_approve_tools=args.auto_approve_tools,
+        always_show_full_output=args.always_show_full_output,
+    )
+
     try:
         logger.info("Connecting to servers...")
         for server in servers:
             tool_names = await mcp_orchestrator.connect_to_server(server.path)
             ui.print_connected_tools(tool_names, server.path)
-        
+
         # Start the chat loop
         await ui.chat_loop()
     finally:

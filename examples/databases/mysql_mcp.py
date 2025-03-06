@@ -10,13 +10,16 @@ MYSQL_PASSWORD = "mysql"
 MYSQL_DATABASE = "mydatabase"
 
 conn = mysql.connector.connect(
-    host=MYSQL_HOST, port=MYSQL_PORT,
-    user=MYSQL_USER, password=MYSQL_PASSWORD,
-    database=MYSQL_DATABASE
+    host=MYSQL_HOST,
+    port=MYSQL_PORT,
+    user=MYSQL_USER,
+    password=MYSQL_PASSWORD,
+    database=MYSQL_DATABASE,
 )
 conn.autocommit = False
 
 mcp = FastMCP("MySQL")
+
 
 @mcp.tool()
 def execute_query(query: str) -> str:
@@ -31,6 +34,7 @@ def execute_query(query: str) -> str:
         conn.commit()
         return f"Query executed successfully. Rows affected: {cursor.rowcount}"
 
+
 @mcp.tool()
 def create_table(name: str, schema: str) -> str:
     """Create a new table with the given name and schema (column definitions)."""
@@ -40,6 +44,7 @@ def create_table(name: str, schema: str) -> str:
     conn.commit()
     return f"Table '{name}' created."
 
+
 @mcp.tool()
 def insert_data(table: str, data: dict) -> str:
     """Insert a row of data into the specified table. `data` is a dict of column values."""
@@ -47,11 +52,12 @@ def insert_data(table: str, data: dict) -> str:
     columns = ", ".join(data.keys())
     placeholders = ", ".join(["%s"] * len(data))
     values = list(data.values())
-    
+
     query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
     cursor.execute(query, values)
     conn.commit()
     return f"Data inserted into table '{table}'. Row ID: {cursor.lastrowid}"
+
 
 @mcp.tool()
 def fetch_data(query: str) -> str:
@@ -61,6 +67,7 @@ def fetch_data(query: str) -> str:
     rows = cursor.fetchall()
     return str(rows)
 
+
 @mcp.tool()
 def list_tables() -> str:
     """List all tables in the current database."""
@@ -69,6 +76,7 @@ def list_tables() -> str:
     tables = cursor.fetchall()
     return str([table[0] for table in tables])
 
+
 @mcp.tool()
 def describe_table(table: str) -> str:
     """Show the structure of a specific table."""
@@ -76,6 +84,7 @@ def describe_table(table: str) -> str:
     cursor.execute(f"DESCRIBE {table}")
     columns = cursor.fetchall()
     return str(columns)
+
 
 if __name__ == "__main__":
     mcp.run()

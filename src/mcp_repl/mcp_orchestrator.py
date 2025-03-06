@@ -3,6 +3,7 @@ from typing import Dict, Any, List
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+
 class MCPOrchestrator:
     """Handles connections to MCP servers and tool execution"""
 
@@ -47,9 +48,9 @@ class MCPOrchestrator:
         server_tools = response.tools
 
         self.sessions[server_script_path] = {
-            "session": session, 
+            "session": session,
             "tools": server_tools,
-            "server_name": server_name
+            "server_name": server_name,
         }
 
         self._update_available_tools()
@@ -68,12 +69,14 @@ class MCPOrchestrator:
                 unique_name = f"{server_name}_{tool.name}"
                 description = f"[{server_name.upper()}] {tool.description}"
 
-                self.available_tools.append({
-                    "name": unique_name,
-                    "description": description,
-                    "input_schema": tool.inputSchema,
-                })
-                
+                self.available_tools.append(
+                    {
+                        "name": unique_name,
+                        "description": description,
+                        "input_schema": tool.inputSchema,
+                    }
+                )
+
                 self.tools.append((unique_name, server_path, tool.name))
 
     async def call_tool(self, tool_name: str, tool_args: Dict[str, Any]):
@@ -93,4 +96,3 @@ class MCPOrchestrator:
     async def cleanup(self):
         """Clean up resources"""
         await self.exit_stack.aclose()
-

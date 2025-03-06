@@ -1,5 +1,6 @@
 from anthropic import Anthropic
 
+
 class LLMClient:
     """Handles interactions with the LLM"""
 
@@ -50,5 +51,3 @@ When asked to write code or perform general tasks unrelated to the available too
             ],
         }
         self.chat_history.append(tool_result_message)
-
-

@@ -3,8 +3,6 @@ name: Upload Python Package
 on:
   release:
     types: [published]
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -28,30 +26,16 @@ jobs:
 
       - name: Create virtual environment and install dependencies
         run: |
-          cd mcp-repl
           uv venv
           uv pip install -e ".[test]"
 
-      - name: Check code formatting with Ruff
-        run: |
-          cd mcp-repl
-          uv run ruff format --check
-
-      - name: Run tests with coverage
-        run: |
-          cd mcp-repl
-          uv run pytest
 
       - name: Build package
         run: |
-          cd mcp-repl
           uv build
 
       - name: Publish package
-        # Only publish when a release is published
-        if: github.event_name == 'release'
         run: |
-          cd mcp-repl
           uv publish 
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}

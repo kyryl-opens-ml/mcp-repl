@@ -10,13 +10,12 @@ PG_PASSWORD = "postgres"
 PG_DATABASE = "postgres"
 
 conn = psycopg2.connect(
-    host=PG_HOST, port=PG_PORT,
-    user=PG_USER, password=PG_PASSWORD,
-    dbname=PG_DATABASE
+    host=PG_HOST, port=PG_PORT, user=PG_USER, password=PG_PASSWORD, dbname=PG_DATABASE
 )
 conn.autocommit = False
 
 mcp = FastMCP("PostgreSQL")
+
 
 @mcp.tool()
 def execute_query(query: str) -> str:
@@ -31,16 +30,17 @@ def execute_query(query: str) -> str:
         conn.commit()
         return "Query executed successfully."
 
+
 @mcp.tool()
 def create_table(name: str, schema: str) -> str:
     """Create a new table with the given name and schema (column definitions)."""
     cur = conn.cursor()
-    cur.execute(sql.SQL("CREATE TABLE {} ({})").format(
-        sql.Identifier(name),
-        sql.SQL(schema)
-    ))
+    cur.execute(
+        sql.SQL("CREATE TABLE {} ({})").format(sql.Identifier(name), sql.SQL(schema))
+    )
     conn.commit()
     return f"Table '{name}' created."
+
 
 @mcp.tool()
 def insert_data(table: str, data: dict) -> str:
@@ -49,13 +49,12 @@ def insert_data(table: str, data: dict) -> str:
     columns = [sql.Identifier(col) for col in data.keys()]
     values = [sql.Literal(val) for val in data.values()]
     insert_stmt = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
-        sql.Identifier(table),
-        sql.SQL(", ").join(columns),
-        sql.SQL(", ").join(values)
+        sql.Identifier(table), sql.SQL(", ").join(columns), sql.SQL(", ").join(values)
     )
     cur.execute(insert_stmt)
     conn.commit()
     return f"Data inserted into table '{table}'."
+
 
 @mcp.tool()
 def fetch_data(query: str) -> str:
@@ -64,6 +63,7 @@ def fetch_data(query: str) -> str:
     cur.execute(query)
     rows = cur.fetchall()
     return str(rows)
+
 
 if __name__ == "__main__":
     mcp.run()
