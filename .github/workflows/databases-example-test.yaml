@@ -28,7 +28,6 @@ jobs:
           uv venv
           uv pip install -e ".[test,databases]"
 
-
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1
 
