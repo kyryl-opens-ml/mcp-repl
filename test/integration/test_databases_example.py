@@ -87,6 +87,9 @@ def test_mcp_repl(mcp_process, chat_history_dir):
 
     with open(latest_chat, "r") as f:
         chat_data = json.load(f)
+        print("\nchat_data")
+        print(chat_data)
+        print("\nchat_data")
         assert len(chat_data) > 0, "Chat history is empty"
 
         # Check if expected tables are in the chat history
