@@ -7,7 +7,7 @@ MYSQL_HOST = "localhost"
 MYSQL_PORT = "3306"
 MYSQL_USER = "root"
 MYSQL_PASSWORD = "mysql"
-MYSQL_DATABASE = "mysql"
+MYSQL_DATABASE = "mydatabase"
 
 conn = mysql.connector.connect(
     host=MYSQL_HOST, port=MYSQL_PORT,

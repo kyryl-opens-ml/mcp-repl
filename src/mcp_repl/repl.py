@@ -61,11 +61,12 @@ kb = KeyBindings()
 class RichUI:
     """Handles the Rich UI components and user interaction"""
 
-    def __init__(self, llm_client: LLMClient, mcp_client: MCPOrchestrator, auto_approve_tools=False):
+    def __init__(self, llm_client: LLMClient, mcp_client: MCPOrchestrator, auto_approve_tools=False, always_show_full_output=False):
         self.llm_client = llm_client
         self.mcp_client = mcp_client
         self.console = Console()
         self.auto_approve_tools = auto_approve_tools
+        self.always_show_full_output = always_show_full_output
         self.chat_id = str(uuid.uuid4())  # Generate a unique ID for this chat session
         self.chat_file = f"chat_history/{self.chat_id}.json"
         
@@ -161,7 +162,7 @@ class RichUI:
         )
 
         # Format the result content based on tool and content type
-        if len(formatted_result) > 500:
+        if len(formatted_result) > 500 and not self.always_show_full_output:
             # For long outputs, truncate and offer to show full content
             preview_length = 500
             truncated = len(formatted_result) > preview_length
@@ -191,7 +192,7 @@ class RichUI:
                     self.console.print("\nFull output:")
                     self.console.print(formatted_result)
         else:
-            # For other results, just use the formatted text in a standard panel
+            # For other results or when always_show_full_output is True, show the full output
             panel_content = Group(header, Text(formatted_result))
             self.console.print(
                 Panel(panel_content, title="Tool Result", border_style="cyan")
@@ -344,6 +345,8 @@ async def main():
     parser.add_argument("--config", type=str, help="Path to config file")
     parser.add_argument("--auto-approve-tools", action="store_true", 
                         help="Automatically approve all tool executions without prompting")
+    parser.add_argument("--always-show-full-output", action="store_true",
+                        help="Always show full tool output without truncating or prompting")
     args = parser.parse_args()
 
     servers = []
@@ -367,7 +370,9 @@ async def main():
     # Initialize the clients
     llm_client = LLMClient()
     mcp_orchestrator = MCPOrchestrator()
-    ui = RichUI(llm_client, mcp_orchestrator, auto_approve_tools=args.auto_approve_tools)
+    ui = RichUI(llm_client, mcp_orchestrator, 
+                auto_approve_tools=args.auto_approve_tools,
+                always_show_full_output=args.always_show_full_output)
     
     try:
         logger.info("Connecting to servers...")

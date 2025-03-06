@@ -18,7 +18,7 @@ def test_mcp_repl():
     os.makedirs("chat_history", exist_ok=True)
     
     # Start the REPL process
-    cmd = ["python", "-m", "src.mcp_repl.repl", "--config", config_path, "--auto-approve-tools"]
+    cmd = ["python", "-m", "src.mcp_repl.repl", "--config", config_path, "--auto-approve-tools", "--always-show-full-output"]
     
     # Use popen to create a subprocess we can write to and read from
     process = subprocess.Popen(
@@ -38,21 +38,9 @@ def test_mcp_repl():
     
     # Test queries to send - only keep the one to get all users
     test_queries = [
-        "Find all tables in PostgreSQL and MySQL, print common tables with number of rows in each.",
+        "find all tables in posgress and mysql",
         "quit"
     ]
-    
-    # Expected email addresses that should be in the response
-    expected_emails = [
-        "john.doe@example.com",
-        "jane.smith@example.com",
-        "bob.wilson@example.com",
-        "alice.j@example.com",
-        "mike.brown@example.com"
-    ]
-    
-    # Track if all emails were found
-    all_emails_found = False
     
     # Send each query and read the response
     for query in test_queries:
@@ -75,9 +63,8 @@ def test_mcp_repl():
             except:
                 break
             
-            # Check if we've collected enough output
-            # if len(output) > 50000 or "Query ❯" in line:
-                # break
+            if len(output) > 500 or "Query ❯" in line:
+                break
     # Check if any chat history files were created
     chat_files = list(Path("chat_history").glob("*.json"))
     if chat_files:
@@ -91,16 +78,20 @@ def test_mcp_repl():
                 print(chat_data)
                 print(f"Chat history contains {len(chat_data)} messages")
                 
-                # Check if emails are in the chat history
+                # Check if expected tables are in the chat history
                 chat_history_text = json.dumps(chat_data)
-                emails_in_history = [email for email in expected_emails if email in chat_history_text]
+                expected_tables = [
+                    "customers", "employees", "inventory", "orders", "products",
+                    "users", "posts", "comments", "categories", "tags"
+                ]
+                tables_in_history = [table for table in expected_tables if table in chat_history_text]
                 
-                print(f"\nEmails found in chat history: {len(emails_in_history)} out of {len(expected_emails)}")
-                if len(emails_in_history) != len(expected_emails):
-                    missing_emails = set(expected_emails) - set(emails_in_history)
-                    print(f"Missing emails in chat history: {missing_emails}")
+                print(f"\nTables found in chat history: {len(tables_in_history)} out of {len(expected_tables)}")
+                if len(tables_in_history) != len(expected_tables):
+                    missing_tables = set(expected_tables) - set(tables_in_history)
+                    print(f"Missing tables in chat history: {missing_tables}")
                 else:
-                    print("All expected emails were found in the chat history!")
+                    print("All expected tables were found in the chat history!")
         except Exception as e:
             print(f"Error reading chat history: {e}")
     

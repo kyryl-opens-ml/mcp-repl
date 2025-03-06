@@ -11,7 +11,7 @@ MYSQL_CONFIG = {
     "port": "3306",
     "user": "root",
     "password": "mysql",
-    "database": "mysql"
+    "database": "mydatabase"
 }
 
 POSTGRES_CONFIG = {
@@ -296,8 +296,6 @@ def generate_redis_data():
             db=REDIS_CONFIG["db"]
         )
         
-        r.flushdb()
-        
         for i in range(1, 101):
             user_key = f"user:{i}"
             user_data = {
@@ -340,8 +338,80 @@ def generate_redis_data():
     except redis.RedisError as e:
         print(f"Redis Error: {e}")
 
+def drop_databases():
+    """Drop all databases before regenerating data"""
+    print("Dropping existing databases...")
+    
+    # Drop MySQL database
+    try:
+        conn = mysql.connector.connect(
+            host=MYSQL_CONFIG["host"],
+            port=MYSQL_CONFIG["port"],
+            user=MYSQL_CONFIG["user"],
+            password=MYSQL_CONFIG["password"]
+        )
+        cursor = conn.cursor()
+        
+        cursor.execute(f"DROP DATABASE IF EXISTS {MYSQL_CONFIG['database']}")
+        cursor.execute(f"CREATE DATABASE {MYSQL_CONFIG['database']}")
+        print(f"MySQL: Reset database {MYSQL_CONFIG['database']}")
+        
+    except mysql.connector.Error as e:
+        print(f"MySQL Error when dropping database: {e}")
+    finally:
+        if 'conn' in locals() and conn.is_connected():
+            cursor.close()
+            conn.close()
+    
+    # For PostgreSQL, instead of dropping the database, we'll drop all tables
+    try:
+        conn = psycopg2.connect(**POSTGRES_CONFIG)
+        conn.autocommit = True
+        cursor = conn.cursor()
+        
+        # Drop all tables in the current database
+        cursor.execute("""
+            DO $$ 
+            DECLARE
+                r RECORD;
+            BEGIN
+                FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+                    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+                END LOOP;
+            END $$;
+        """)
+        print(f"PostgreSQL: Dropped all tables in database {POSTGRES_CONFIG['database']}")
+        
+    except psycopg2.Error as e:
+        print(f"PostgreSQL Error when dropping tables: {e}")
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+    
+    # Clear Redis database - using DEL instead of FLUSHDB
+    try:
+        r = redis.Redis(
+            host=REDIS_CONFIG["host"],
+            port=REDIS_CONFIG["port"],
+            password=REDIS_CONFIG["password"],
+            db=REDIS_CONFIG["db"]
+        )
+        
+        # Get all keys and delete them
+        all_keys = r.keys('*')
+        if all_keys:
+            r.delete(*all_keys)
+        print(f"Redis: Cleared all keys in database {REDIS_CONFIG['db']}")
+        
+    except redis.RedisError as e:
+        print(f"Redis Error when clearing database: {e}")
+
 if __name__ == "__main__":
     print("Generating mock data for databases...")
+    
+    drop_databases()  # Drop databases before generating new data
     
     generate_mysql_data()
     generate_postgres_data()
