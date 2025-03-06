@@ -1,41 +1,33 @@
-# mysql_mcp.py
-# Requires: pip install mcp mysql-connector-python
 import os
 import mysql.connector
 from mysql.connector import Error
 from mcp.server.fastmcp import FastMCP
 
-# Database connection configuration (hardcoded)
 MYSQL_HOST = "localhost"
 MYSQL_PORT = "3306"
 MYSQL_USER = "root"
 MYSQL_PASSWORD = "mysql"
 MYSQL_DATABASE = "mysql"
 
-# Establish a connection to MySQL
 conn = mysql.connector.connect(
     host=MYSQL_HOST, port=MYSQL_PORT,
     user=MYSQL_USER, password=MYSQL_PASSWORD,
     database=MYSQL_DATABASE
 )
-conn.autocommit = False  # Use manual commit control
+conn.autocommit = False
 
-# Initialize the MCP server
-mcp = FastMCP("MySQL", dependencies=["mysql-connector-python"])
+mcp = FastMCP("MySQL")
 
 @mcp.tool()
 def execute_query(query: str) -> str:
     """Execute an arbitrary SQL query. Returns results for SELECT, or a success message for others."""
     cursor = conn.cursor()
     cursor.execute(query)
-    # If it's a SELECT or similar, fetch results
     command = query.strip().split()[0].lower()
     if command == "select" or command == "show" or command == "describe":
         rows = cursor.fetchall()
-        # Convert result rows to string for display
         return str(rows)
     else:
-        # For INSERT/UPDATE/DELETE/DDL, commit the transaction
         conn.commit()
         return f"Query executed successfully. Rows affected: {cursor.rowcount}"
 
@@ -52,7 +44,6 @@ def create_table(name: str, schema: str) -> str:
 def insert_data(table: str, data: dict) -> str:
     """Insert a row of data into the specified table. `data` is a dict of column values."""
     cursor = conn.cursor()
-    # Build columns and values for insertion
     columns = ", ".join(data.keys())
     placeholders = ", ".join(["%s"] * len(data))
     values = list(data.values())

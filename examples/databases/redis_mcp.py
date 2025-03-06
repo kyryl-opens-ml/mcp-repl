@@ -1,20 +1,14 @@
-# redis_mcp.py
-# Requires: pip install mcp redis
-import os
 import redis
 from mcp.server.fastmcp import FastMCP
 
-# Redis connection configuration (hardcoded)
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
-REDIS_DB = 0  # Default database
+REDIS_DB = 0
 REDIS_PASSWORD = "redis"
 
-# Connect to Redis
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD)
 
-# Initialize the MCP server
-mcp = FastMCP("Redis", dependencies=["redis"])
+mcp = FastMCP("Redis")
 
 @mcp.tool()
 def set_value(key: str, value: str) -> str:
@@ -28,14 +22,12 @@ def get_value(key: str) -> str:
     val = redis_client.get(key)
     if val is None:
         return None
-    # Decode bytes to string for return
     return val.decode("utf-8")
 
 @mcp.tool()
 def list_keys(pattern: str = "*") -> list:
     """List all keys matching the given pattern (glob style)."""
     keys = redis_client.keys(pattern)
-    # Decode bytes keys to strings
     return [key.decode("utf-8") for key in keys]
 
 @mcp.tool()

@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from mcp_repl.llm_client import LLMClient
-from mcp_repl.mcp_orchestrator import MCPClient
+from mcp_repl.mcp_orchestrator import MCPOrchestrator
 
 
 class CustomLogFormatter(logging.Formatter):
@@ -48,7 +48,6 @@ logger = get_logger()
 
 load_dotenv()
 
-# Define styles for the prompt
 style = Style.from_dict(
     {
         "prompt": "ansicyan bold",
@@ -56,14 +55,13 @@ style = Style.from_dict(
     }
 )
 
-# Create key bindings
 kb = KeyBindings()
 
 
 class RichUI:
     """Handles the Rich UI components and user interaction"""
 
-    def __init__(self, llm_client: LLMClient, mcp_client: MCPClient, auto_approve_tools=False):
+    def __init__(self, llm_client: LLMClient, mcp_client: MCPOrchestrator, auto_approve_tools=False):
         self.llm_client = llm_client
         self.mcp_client = mcp_client
         self.console = Console()
@@ -368,19 +366,19 @@ async def main():
 
     # Initialize the clients
     llm_client = LLMClient()
-    mcp_client = MCPClient()
-    ui = RichUI(llm_client, mcp_client, auto_approve_tools=args.auto_approve_tools)
+    mcp_orchestrator = MCPOrchestrator()
+    ui = RichUI(llm_client, mcp_orchestrator, auto_approve_tools=args.auto_approve_tools)
     
     try:
         logger.info("Connecting to servers...")
         for server in servers:
-            tool_names = await mcp_client.connect_to_server(server.path)
+            tool_names = await mcp_orchestrator.connect_to_server(server.path)
             ui.print_connected_tools(tool_names, server.path)
         
         # Start the chat loop
         await ui.chat_loop()
     finally:
-        await mcp_client.cleanup()
+        await mcp_orchestrator.cleanup()
 
 
 if __name__ == "__main__":

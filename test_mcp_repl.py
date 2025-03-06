@@ -34,11 +34,11 @@ def test_mcp_repl():
     print("Started MCP REPL process")
     
     # Wait for the application to initialize
-    time.sleep(3)
+    time.sleep(5)
     
     # Test queries to send - only keep the one to get all users
     test_queries = [
-        "get all users from my db",
+        "Find all tables in PostgreSQL and MySQL, print common tables with number of rows in each.",
         "quit"
     ]
     
@@ -76,8 +76,8 @@ def test_mcp_repl():
                 break
             
             # Check if we've collected enough output
-            if len(output) > 500 or "Query ❯" in line:
-                break
+            # if len(output) > 50000 or "Query ❯" in line:
+                # break
     # Check if any chat history files were created
     chat_files = list(Path("chat_history").glob("*.json"))
     if chat_files:

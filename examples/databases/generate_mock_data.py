@@ -1,44 +1,37 @@
-# mock_data.py
-# Requires: pip install faker mysql-connector-python psycopg2-binary redis
 import random
 from faker import Faker
 import mysql.connector
 import psycopg2
 import redis
 
-# Initialize Faker
 fake = Faker()
 
-# MySQL Configuration
 MYSQL_CONFIG = {
-    "host": "localhost",  # Using port forwarding from setup.sh
+    "host": "localhost",
     "port": "3306",
     "user": "root",
     "password": "mysql",
-    "database": "retail_db"
+    "database": "mysql"
 }
 
-# PostgreSQL Configuration
 POSTGRES_CONFIG = {
-    "host": "localhost",  # Using port forwarding from setup.sh
+    "host": "localhost",
     "port": "5432",
     "user": "postgres",
     "password": "postgres",
     "database": "postgres"
 }
 
-# Redis Configuration
 REDIS_CONFIG = {
-    "host": "localhost",  # Using port forwarding from setup.sh
+    "host": "localhost",
     "port": 6379,
-    "password": "redis",  # Added password for Redis authentication
+    "password": "redis",
     "db": 0
 }
 
 def generate_mysql_data():
     """Generate and insert mock data into MySQL database"""
     try:
-        # Connect to MySQL without specifying database first
         conn = mysql.connector.connect(
             host=MYSQL_CONFIG["host"],
             port=MYSQL_CONFIG["port"],
@@ -47,11 +40,9 @@ def generate_mysql_data():
         )
         cursor = conn.cursor()
         
-        # Create database if it doesn't exist
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {MYSQL_CONFIG['database']}")
         cursor.execute(f"USE {MYSQL_CONFIG['database']}")
         
-        # Create tables
         tables = {
             "customers": """
                 CREATE TABLE IF NOT EXISTS customers (
@@ -103,24 +94,21 @@ def generate_mysql_data():
             """
         }
         
-        # Create tables
         for table_name, create_query in tables.items():
             cursor.execute(create_query)
             print(f"MySQL: Created table {table_name}")
         
-        # Insert data into customers
         for _ in range(100):
             cursor.execute(
                 "INSERT INTO customers (name, email, phone, address) VALUES (%s, %s, %s, %s)",
                 (
                     fake.name(),
                     fake.email(),
-                    fake.phone_number()[:20],  # Limit phone number to 20 characters
+                    fake.phone_number()[:20],
                     fake.address()
                 )
             )
         
-        # Insert data into products
         categories = ["Electronics", "Clothing", "Food", "Books", "Home"]
         for _ in range(100):
             cursor.execute(
@@ -134,7 +122,6 @@ def generate_mysql_data():
                 )
             )
         
-        # Insert data into employees
         positions = ["Manager", "Developer", "Designer", "Analyst", "HR", "Sales"]
         departments = ["Engineering", "Marketing", "Sales", "HR", "Finance"]
         for _ in range(100):
@@ -149,7 +136,6 @@ def generate_mysql_data():
                 )
             )
         
-        # Insert data into orders
         statuses = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"]
         for _ in range(100):
             cursor.execute(
@@ -161,7 +147,6 @@ def generate_mysql_data():
                 )
             )
         
-        # Insert data into inventory
         warehouses = ["North", "South", "East", "West", "Central"]
         for _ in range(100):
             cursor.execute(
@@ -186,12 +171,10 @@ def generate_mysql_data():
 def generate_postgres_data():
     """Generate and insert mock data into PostgreSQL database"""
     try:
-        # Connect to PostgreSQL
         conn = psycopg2.connect(**POSTGRES_CONFIG)
         cursor = conn.cursor()
         conn.autocommit = True
         
-        # Create tables
         tables = {
             "users": """
                 CREATE TABLE IF NOT EXISTS users (
@@ -238,12 +221,10 @@ def generate_postgres_data():
             """
         }
         
-        # Create tables
         for table_name, create_query in tables.items():
             cursor.execute(create_query)
             print(f"PostgreSQL: Created table {table_name}")
         
-        # Insert data into users
         for _ in range(100):
             cursor.execute(
                 "INSERT INTO users (username, email, password_hash, is_active) VALUES (%s, %s, %s, %s)",
@@ -255,7 +236,6 @@ def generate_postgres_data():
                 )
             )
         
-        # Insert data into posts
         for _ in range(100):
             cursor.execute(
                 "INSERT INTO posts (user_id, title, content, views) VALUES (%s, %s, %s, %s)",
@@ -267,7 +247,6 @@ def generate_postgres_data():
                 )
             )
         
-        # Insert data into comments
         for _ in range(100):
             cursor.execute(
                 "INSERT INTO comments (post_id, user_id, content) VALUES (%s, %s, %s)",
@@ -278,7 +257,6 @@ def generate_postgres_data():
                 )
             )
         
-        # Insert data into categories
         category_names = ["Technology", "Health", "Sports", "Entertainment", "Business", "Science", "Politics"]
         for category in category_names:
             cursor.execute(
@@ -289,7 +267,6 @@ def generate_postgres_data():
                 )
             )
         
-        # Insert data into tags
         colors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33F3", "#33FFF3", "#F333FF"]
         tag_names = ["trending", "popular", "new", "featured", "hot", "recommended", "sponsored"]
         for i, tag in enumerate(tag_names):
@@ -312,7 +289,6 @@ def generate_postgres_data():
 def generate_redis_data():
     """Generate and insert mock data into Redis database"""
     try:
-        # Connect to Redis
         r = redis.Redis(
             host=REDIS_CONFIG["host"],
             port=REDIS_CONFIG["port"],
@@ -320,10 +296,8 @@ def generate_redis_data():
             db=REDIS_CONFIG["db"]
         )
         
-        # Clear existing data (optional)
-        # r.flushdb()
+        r.flushdb()
         
-        # User profiles
         for i in range(1, 101):
             user_key = f"user:{i}"
             user_data = {
@@ -336,7 +310,6 @@ def generate_redis_data():
             }
             r.hset(user_key, mapping=user_data)
         
-        # Session data
         for i in range(1, 101):
             session_key = f"session:{fake.uuid4()}"
             r.hset(session_key, mapping={
@@ -346,25 +319,21 @@ def generate_redis_data():
                 "created_at": fake.iso8601(),
                 "expires_at": fake.future_datetime().isoformat()
             })
-            # Set expiration for session keys
-            r.expire(session_key, random.randint(3600, 86400))  # 1 hour to 1 day
+            r.expire(session_key, random.randint(3600, 86400))
         
-        # Cache data
         for i in range(1, 101):
             cache_key = f"cache:{fake.md5()}"
             r.set(cache_key, fake.text())
-            r.expire(cache_key, random.randint(300, 3600))  # 5 minutes to 1 hour
+            r.expire(cache_key, random.randint(300, 3600))
         
-        # Counter data
         counters = ["page_views", "api_calls", "logins", "signups", "errors"]
         for counter in counters:
             r.set(f"counter:{counter}", random.randint(1000, 1000000))
         
-        # List data (e.g., recent activities)
         activity_key = "recent_activities"
         for _ in range(100):
             r.lpush(activity_key, f"{fake.name()} {random.choice(['logged in', 'posted a comment', 'updated profile', 'made a purchase', 'viewed a page'])}")
-        r.ltrim(activity_key, 0, 99)  # Keep only the 100 most recent activities
+        r.ltrim(activity_key, 0, 99)
         
         print("Redis: Successfully inserted mock data")
         
@@ -374,7 +343,6 @@ def generate_redis_data():
 if __name__ == "__main__":
     print("Generating mock data for databases...")
     
-    # Generate data for each database
     generate_mysql_data()
     generate_postgres_data()
     generate_redis_data()

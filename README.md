@@ -12,3 +12,6 @@ A REPL interface for interacting with various services through MCP (Model Contro
 ## Tesing 
 
 ## Development
+
+
+Find all common tables in PostgreSQL and MySQL, print them all with number of rows in each.

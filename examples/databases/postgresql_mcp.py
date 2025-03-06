@@ -1,41 +1,33 @@
-# postgresql_mcp.py
-# Requires: pip install mcp psycopg2-binary
 import os
 import psycopg2
 from psycopg2 import sql
 from mcp.server.fastmcp import FastMCP
 
-# Database connection configuration (hardcoded)
 PG_HOST = "localhost"
 PG_PORT = "5432"
 PG_USER = "postgres"
 PG_PASSWORD = "postgres"
 PG_DATABASE = "postgres"
 
-# Establish a connection to PostgreSQL
 conn = psycopg2.connect(
     host=PG_HOST, port=PG_PORT,
     user=PG_USER, password=PG_PASSWORD,
     dbname=PG_DATABASE
 )
-conn.autocommit = False  # Use manual commit control
+conn.autocommit = False
 
-# Initialize the MCP server
-mcp = FastMCP("PostgreSQL", dependencies=["psycopg2-binary"])
+mcp = FastMCP("PostgreSQL")
 
 @mcp.tool()
 def execute_query(query: str) -> str:
     """Execute an arbitrary SQL query. Returns results for SELECT, or a success message for others."""
     cur = conn.cursor()
     cur.execute(query)
-    # If it's a SELECT or similar, fetch results
     command = query.strip().split()[0].lower()
     if command == "select" or command == "show" or command == "describe":
         rows = cur.fetchall()
-        # Convert result rows to string for display
         return str(rows)
     else:
-        # For INSERT/UPDATE/DELETE/DDL, commit the transaction
         conn.commit()
         return "Query executed successfully."
 
@@ -54,7 +46,6 @@ def create_table(name: str, schema: str) -> str:
 def insert_data(table: str, data: dict) -> str:
     """Insert a row of data into the specified table. `data` is a dict of column values."""
     cur = conn.cursor()
-    # Build columns and values for insertion
     columns = [sql.Identifier(col) for col in data.keys()]
     values = [sql.Literal(val) for val in data.values()]
     insert_stmt = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
