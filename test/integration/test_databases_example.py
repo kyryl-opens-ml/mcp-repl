@@ -77,7 +77,7 @@ def test_mcp_repl(mcp_process, chat_history_dir):
             except:
                 break
 
-            if len(output) > 500 or "Query ❯" in line:
+            if len(output) > 5000 or "Query ❯" in line:
                 break
 
     chat_files = list(Path(chat_history_dir).glob("*.json"))
