@@ -192,9 +192,10 @@ When asked to write code or perform general tasks unrelated to the available too
 class RichUI:
     """Handles the Rich UI components and user interaction"""
 
-    def __init__(self, llm_client: LLMClient):
+    def __init__(self, llm_client: LLMClient, auto_approve_tools=False):
         self.llm_client = llm_client
         self.console = Console()
+        self.auto_approve_tools = auto_approve_tools
 
     def print_welcome(self):
         """Print welcome message"""
@@ -220,6 +221,11 @@ class RichUI:
 
     def confirm_tool_execution(self, tool_name, tool_args):
         """Ask for confirmation to execute a tool"""
+        # If auto-approve is enabled, return True without asking
+        if self.auto_approve_tools:
+            self.console.print(f"[bold yellow]Auto-approving tool execution: {tool_name}[/bold yellow]")
+            return True
+            
         tool_args_str = str(tool_args)
         confirmation_text = Group(
             Text("🛠️  Tool Execution Request", style="bold white"),
@@ -335,9 +341,9 @@ class RichUI:
 class MCPClient:
     """Main client that coordinates LLM and UI components"""
 
-    def __init__(self):
+    def __init__(self, auto_approve_tools=False):
         self.llm_client = LLMClient()
-        self.ui = RichUI(self.llm_client)
+        self.ui = RichUI(self.llm_client, auto_approve_tools)
         self.connected_servers = []
         self.chat_id = str(uuid.uuid4())  # Generate a unique ID for this chat session
         self.chat_file = f"chat_history/{self.chat_id}.json"
@@ -486,6 +492,8 @@ class MCPServerConfig(BaseModel):
 async def main():
     parser = argparse.ArgumentParser(description="MCP Client")
     parser.add_argument("--config", type=str, help="Path to config file")
+    parser.add_argument("--auto-approve-tools", action="store_true", 
+                        help="Automatically approve all tool executions without prompting")
     args = parser.parse_args()
 
     servers = []
@@ -506,7 +514,7 @@ async def main():
         print("Usage: python client.py --config config.json")
         sys.exit(1)
 
-    client = MCPClient()
+    client = MCPClient(auto_approve_tools=args.auto_approve_tools)
     try:
         logger.info("Connecting to servers...")
         for server in servers:
