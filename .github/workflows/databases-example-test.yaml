@@ -39,7 +39,8 @@ jobs:
       - name: Generate mock data
         run: |
           uv run python examples/databases/generate_mock_data.py
-
       - name: Run integration tests
         run: |
           uv run pytest ./test/integration/
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
