@@ -26,7 +26,7 @@ jobs:
       - name: Create virtual environment and install dependencies
         run: |
           uv venv
-          uv pip install -e ".[test]"
+          uv pip install -e ".[test,databases]"
 
 
       - name: Create k8s Kind Cluster
