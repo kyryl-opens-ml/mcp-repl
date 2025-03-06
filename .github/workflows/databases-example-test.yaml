@@ -1,18 +1,15 @@
-name: Upload Python Package
+name: Databases Integration Test
 
 on:
-  release:
-    types: [published]
   push:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  test-and-publish:
-    name: Test and Publish Python Package
+  end2end-test:
+    name: end2end-test
     runs-on: ubuntu-latest
 
     steps:
@@ -28,30 +25,21 @@ jobs:
 
       - name: Create virtual environment and install dependencies
         run: |
-          cd mcp-repl
           uv venv
           uv pip install -e ".[test]"
 
-      - name: Check code formatting with Ruff
-        run: |
-          cd mcp-repl
-          uv run ruff format --check
 
-      - name: Run tests with coverage
-        run: |
-          cd mcp-repl
-          uv run pytest
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1
 
-      - name: Build package
+      - name: Run infrastructure setup
         run: |
-          cd mcp-repl
-          uv build
+          bash examples/databases/setup.sh
 
-      - name: Publish package
-        # Only publish when a release is published
-        if: github.event_name == 'release'
+      - name: Generate mock data
         run: |
-          cd mcp-repl
-          uv publish 
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
+          uv run python examples/databases/generate_mock_data.py
+
+      - name: Run integration tests
+        run: |
+          uv run pytest ./test/integration/
