@@ -1,0 +1,30 @@
+[project]
+name = "mcp-repl"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "truskovskiyk", email = "truskovskiyk@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.11.13",
+    "anthropic>=0.49.0",
+    "mcp[cli]>=1.3.0",
+    "prompt-toolkit>=3.0.50",
+    "python-dotenv>=1.0.1",
+    "ruff>=0.9.9",
+]
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+databases = [
+    "faker>=36.2.2",
+    "mysql-connector-python>=9.2.0",
+    "psycopg2-binary>=2.9.10",
+    "redis>=5.2.1",
+]

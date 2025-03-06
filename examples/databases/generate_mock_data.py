@@ -27,27 +27,29 @@ POSTGRES_CONFIG = {
     "database": "postgres"
 }
 
-# MinIO Configuration (S3-compatible storage)
-MINIO_CONFIG = {
-    "endpoint_url": "http://localhost:9000",
-    "access_key": "minioadmin",
-    "secret_key": "minioadmin"
-}
-
 # Redis Configuration
 REDIS_CONFIG = {
     "host": "localhost",  # Using port forwarding from setup.sh
     "port": 6379,
-    "password": None,
+    "password": "redis",  # Added password for Redis authentication
     "db": 0
 }
 
 def generate_mysql_data():
     """Generate and insert mock data into MySQL database"""
     try:
-        # Connect to MySQL
-        conn = mysql.connector.connect(**MYSQL_CONFIG)
+        # Connect to MySQL without specifying database first
+        conn = mysql.connector.connect(
+            host=MYSQL_CONFIG["host"],
+            port=MYSQL_CONFIG["port"],
+            user=MYSQL_CONFIG["user"],
+            password=MYSQL_CONFIG["password"]
+        )
         cursor = conn.cursor()
+        
+        # Create database if it doesn't exist
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {MYSQL_CONFIG['database']}")
+        cursor.execute(f"USE {MYSQL_CONFIG['database']}")
         
         # Create tables
         tables = {
@@ -113,7 +115,7 @@ def generate_mysql_data():
                 (
                     fake.name(),
                     fake.email(),
-                    fake.phone_number(),
+                    fake.phone_number()[:20],  # Limit phone number to 20 characters
                     fake.address()
                 )
             )
@@ -177,7 +179,7 @@ def generate_mysql_data():
     except mysql.connector.Error as e:
         print(f"MySQL Error: {e}")
     finally:
-        if conn.is_connected():
+        if 'conn' in locals() and conn.is_connected():
             cursor.close()
             conn.close()
 

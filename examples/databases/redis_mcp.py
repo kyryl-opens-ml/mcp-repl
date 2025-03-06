@@ -5,11 +5,10 @@ import redis
 from mcp.server.fastmcp import FastMCP
 
 # Redis connection configuration (hardcoded)
-REDIS_URL = "redis://default:oxHEJDLngOmEVUfVfTkBuFjzUeADzrvw@tramway.proxy.rlwy.net:26584"
-REDIS_HOST = "tramway.proxy.rlwy.net"
-REDIS_PORT = 26584
+REDIS_HOST = "localhost"
+REDIS_PORT = 6379
 REDIS_DB = 0  # Default database
-REDIS_PASSWORD = "oxHEJDLngOmEVUfVfTkBuFjzUeADzrvw"
+REDIS_PASSWORD = "redis"
 
 # Connect to Redis
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD)

@@ -6,11 +6,11 @@ from mysql.connector import Error
 from mcp.server.fastmcp import FastMCP
 
 # Database connection configuration (hardcoded)
-MYSQL_HOST = "monorail.proxy.rlwy.net"
-MYSQL_PORT = "45371"
+MYSQL_HOST = "localhost"
+MYSQL_PORT = "3306"
 MYSQL_USER = "root"
-MYSQL_PASSWORD = "hGCf3-GHcBcbDFGhcCHGEcfcbcFGBdAh"
-MYSQL_DATABASE = "railway"
+MYSQL_PASSWORD = "mysql"
+MYSQL_DATABASE = "mysql"
 
 # Establish a connection to MySQL
 conn = mysql.connector.connect(

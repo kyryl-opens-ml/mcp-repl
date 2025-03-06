@@ -6,11 +6,11 @@ from psycopg2 import sql
 from mcp.server.fastmcp import FastMCP
 
 # Database connection configuration (hardcoded)
-PG_HOST = "turntable.proxy.rlwy.net"
-PG_PORT = "17677"
+PG_HOST = "localhost"
+PG_PORT = "5432"
 PG_USER = "postgres"
-PG_PASSWORD = "JEQmdfxkGIwQpInLrqxDTXsIEwXLdzjG"
-PG_DATABASE = "railway"
+PG_PASSWORD = "postgres"
+PG_DATABASE = "postgres"
 
 # Establish a connection to PostgreSQL
 conn = psycopg2.connect(

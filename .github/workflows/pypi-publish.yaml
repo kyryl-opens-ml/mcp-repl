@@ -1,0 +1,57 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-publish:
+    name: Test and Publish Python Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "mcp-repl/pyproject.toml"
+
+      - name: Create virtual environment and install dependencies
+        run: |
+          cd mcp-repl
+          uv venv
+          uv pip install -e ".[test]"
+
+      - name: Check code formatting with Ruff
+        run: |
+          cd mcp-repl
+          uv run ruff format --check
+
+      - name: Run tests with coverage
+        run: |
+          cd mcp-repl
+          uv run pytest
+
+      - name: Build package
+        run: |
+          cd mcp-repl
+          uv build
+
+      - name: Publish package
+        # Only publish when a release is published
+        if: github.event_name == 'release'
+        run: |
+          cd mcp-repl
+          uv publish 
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
