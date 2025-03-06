@@ -1,0 +1,5 @@
+[
+    { "path": "mysql_mcp.py", "name": "MySQL MCP", "description": "MySQL database operations" },
+    { "path": "postgresql_mcp.py", "name": "PostgreSQL MCP", "description": "Database operations" },
+    { "path": "redis_mcp.py", "name": "Redis MCP", "description": "Redis operations" }
+  ]

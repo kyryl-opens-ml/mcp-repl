@@ -1,0 +1,45 @@
+name: Databases Integration Test
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  end2end-test:
+    name: end2end-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Create virtual environment and install dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[test,databases]"
+
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1
+
+      - name: Run infrastructure setup
+        run: |
+          bash examples/databases/setup.sh
+
+      - name: Generate mock data
+        run: |
+          uv run python examples/databases/generate_mock_data.py
+      - name: Run integration tests
+        run: |
+          uv run pytest -ss ./test/integration/
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
