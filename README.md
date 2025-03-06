@@ -16,8 +16,6 @@ A lightweight REPL (Read-Eval-Print Loop) for interacting with various services 
 Install via pip or uv:
 
 ```bash
-pip install mcp-repl
-# or
 uv add mcp-repl
 ```
 
@@ -28,7 +26,7 @@ Clone and install in editable mode:
 ```bash
 git clone https://github.com/yourusername/mcp-repl.git
 cd mcp-repl
-pip install -e .
+uv venv
 ```
 
 ## Usage

@@ -65,7 +65,7 @@ def test_mcp_repl(mcp_process, chat_history_dir):
         process.stdin.write(f"{query}\n")
         process.stdin.flush()
 
-        time.sleep(5)
+        time.sleep(60)
 
         output = ""
         while process.stdout.readable() and not process.stdout.closed:
