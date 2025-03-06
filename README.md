@@ -51,16 +51,21 @@ Setup infrastructure (requires `kind` and `helm`):
 bash examples/databases/setup.sh
 ```
 
+Install databases related dependencies
+```bash
+uv add mcp-repl['databases']
+```
+
 Generate mock data:
 
 ```bash
-python examples/databases/generate_mock_data.py
+uv run examples/databases/generate_mock_data.py
 ```
 
 Start the REPL:
 
 ```bash
-python -m src.mcp_repl.repl --config examples/databases/config.json --auto-approve-tools
+uv run -m mcp_repl.repl --config examples/databases/config.json --auto-approve-tools
 ```
 
 ### Sample Queries
@@ -76,7 +81,7 @@ You can perform queries like:
 Start the REPL:
 
 ```bash
-python -m src.mcp_repl.repl --config path/to/config.json
+uv run -m mcp_repl.repl --config path/to/config.json
 ```
 
 ### Optional Flags
@@ -92,12 +97,5 @@ Comprehensive integration tests are included to verify functionality:
 Run all tests:
 
 ```bash
-pytest
+uv run pytest
 ```
-
-Run specific integration tests:
-
-```bash
-pytest ./test/integration/
-```
-
