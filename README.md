@@ -1,6 +1,6 @@
 # MCP-REPL
 
-A lightweight REPL (Read-Eval-Print Loop) for interacting with various services through MCP (Model Control Protocol).
+A lightweight REPL (Read-Eval-Print Loop) for interacting with various services through MCP (Model Context Protocol).
 
 ## Overview
 
