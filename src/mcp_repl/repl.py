@@ -1,27 +1,28 @@
-import asyncio
-import sys
-import json
-import os
 import argparse
-from prompt_toolkit import PromptSession
-from prompt_toolkit.history import FileHistory
-from prompt_toolkit.styles import Style
-from prompt_toolkit.formatted_text import HTML
-from prompt_toolkit.key_binding import KeyBindings
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.panel import Panel
-from rich.text import Text
-from rich.console import Group
-import uuid
+import asyncio
+import json
 import logging
-from pathlib import Path
+import os
+import sys
+import traceback
+import uuid
+from enum import StrEnum
+from itertools import groupby
 
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from prompt_toolkit import PromptSession
+from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.styles import Style
+from rich.console import Console, Group
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 from mcp_repl.llm_client import LLMClient
-from mcp_repl.mcp_orchestrator import MCPOrchestrator
+from mcp_repl.mcp_orchestrator import MCPOrchestrator, MCPServerConfig
 
 
 class CustomLogFormatter(logging.Formatter):
@@ -60,6 +61,17 @@ style = Style.from_dict(
 kb = KeyBindings()
 
 
+class REPLCommands(StrEnum):
+    EXIT = "q!"
+    RELOAD = "r!"
+    HELP = "h!"
+    LIST_MCP = "l!"
+    CLEAR = "c!"
+    ADD_SERVER = "add!"
+    REMOVE_SERVER = "remove!"
+    LIST_SERVERS = "servers!"
+
+
 class RichUI:
     """Handles the Rich UI components and user interaction"""
 
@@ -75,13 +87,10 @@ class RichUI:
         self.console = Console()
         self.auto_approve_tools = auto_approve_tools
         self.always_show_full_output = always_show_full_output
-        self.chat_id = str(uuid.uuid4())  # Generate a unique ID for this chat session
+        self.chat_id = str(uuid.uuid4())
         self.chat_file = f"chat_history/{self.chat_id}.json"
 
-        # Create chat history directory if it doesn't exist
         os.makedirs("chat_history", exist_ok=True)
-
-        # Initialize the chat history file with an empty list
         with open(self.chat_file, "w") as f:
             json.dump([], f)
 
@@ -89,7 +98,15 @@ class RichUI:
         """Print welcome message"""
         self.console.print("[bold blue]MCP Client Started![/bold blue]")
         self.console.print(
-            "Type your queries, [bold red]quit[/bold red] to exit, or press [bold red]q[/bold red] to exit directly."
+            "Available commands:\n"
+            f"• [bold red]{REPLCommands.EXIT}[/bold red] to exit\n"
+            f"• [bold yellow]{REPLCommands.RELOAD}[/bold yellow] to reload\n"
+            f"• [bold green]{REPLCommands.HELP}[/bold green] for help\n"
+            f"• [bold cyan]{REPLCommands.CLEAR}[/bold cyan] to clear screen\n"
+            f"• [bold magenta]{REPLCommands.LIST_MCP}[/bold magenta] to list available tools\n"
+            f"• [bold blue]{REPLCommands.ADD_SERVER}[/bold blue] to add a new MCP server\n"
+            f"• [bold red]{REPLCommands.REMOVE_SERVER}[/bold red] to remove an MCP server\n"
+            f"• [bold green]{REPLCommands.LIST_SERVERS}[/bold green] to list connected servers"
         )
 
     def print_connected_tools(self, tool_names, server_path):
@@ -109,7 +126,6 @@ class RichUI:
 
     def confirm_tool_execution(self, tool_name, tool_args):
         """Ask for confirmation to execute a tool"""
-        # If auto-approve is enabled, return True without asking
         if self.auto_approve_tools:
             self.console.print(
                 f"[bold yellow]Auto-approving tool execution: {tool_name}[/bold yellow]"
@@ -136,25 +152,21 @@ class RichUI:
             )
         )
 
-        # Get user confirmation
         confirm = input()
-        self.console.print()  # Add a blank line after input
+        self.console.print()
 
         return confirm.lower() != "n"
 
     def display_tool_result(self, tool_name, tool_args, result):
         """Display tool execution result"""
-        # Extract the result text
         result_text = result.content
         formatted_result = ""
 
         if isinstance(result_text, list) and len(result_text) > 0:
             try:
-                # Try to parse as JSON
                 json_data = json.loads(result_text[0].text)
                 formatted_result = json.dumps(json_data, indent=2)
             except (json.JSONDecodeError, AttributeError):
-                # If not JSON, use the raw text
                 if hasattr(result_text[0], "text"):
                     formatted_result = result_text[0].text
                 else:
@@ -168,19 +180,14 @@ class RichUI:
             Text("📥 Arguments: ", style="bold cyan")
             + Text(str(tool_args), style="italic"),
             Text("📤 Raw Result:", style="bold cyan"),
-            Text(""),  # Empty line for spacing
+            Text(""),
         )
 
-        # Format the result content based on tool and content type
         if len(formatted_result) > 500 and not self.always_show_full_output:
-            # For long outputs, truncate and offer to show full content
             preview_length = 500
             truncated = len(formatted_result) > preview_length
             preview = formatted_result[:preview_length] + ("..." if truncated else "")
-
-            # Display truncated content in panel
             panel_content = Group(header, Text(preview))
-
             if truncated:
                 panel_content.renderables.append(
                     Text(
@@ -194,15 +201,12 @@ class RichUI:
             self.console.print(
                 Panel(panel_content, title="Tool Result", border_style="cyan")
             )
-
-            # Offer to show full content
             if truncated:
                 show_full = input("\nShow full output? (y/n): ")
                 if show_full.lower() == "y":
                     self.console.print("\nFull output:")
                     self.console.print(formatted_result)
         else:
-            # For other results or when always_show_full_output is True, show the full output
             panel_content = Group(header, Text(formatted_result))
             self.console.print(
                 Panel(panel_content, title="Tool Result", border_style="cyan")
@@ -213,7 +217,6 @@ class RichUI:
     def print_error(self, error):
         """Print error message"""
         self.console.print(f"\n[bold red]Error:[/bold red] {str(error)}")
-        import traceback
 
         self.console.print(traceback.format_exc())
 
@@ -238,25 +241,19 @@ class RichUI:
 
     async def process_query(self, query: str):
         """Process a query using Claude and available tools"""
-        # Add the new user message to chat history
         await self.llm_client.add_user_message(query)
 
-        # Debug and save chat history
         self.debug_and_save_chat_history()
 
-        # Process the conversation with multiple tool calls if needed
         while True:
-            # Show status indicator for API call
             with self.console.status("[bold green]Processing query...[/bold green]"):
                 response = await self.llm_client.get_llm_response(
                     self.mcp_client.available_tools
                 )
 
-            # Track if any tool was used in this turn
             tool_used = False
             assistant_content = []
 
-            # Process and display the response
             for content in response.content:
                 if content.type == "text":
                     self.print_markdown(content.text)
@@ -267,50 +264,128 @@ class RichUI:
                     tool_args = content.input
                     tool_use_id = content.id
 
-                    # Print tool call information
                     self.print_tool_call(tool_name)
 
-                    # Get user confirmation
                     if self.confirm_tool_execution(tool_name, tool_args):
-                        # Show status indicator for tool execution
                         with self.console.status(
                             "[bold green]Executing tool...[/bold green]"
                         ):
-                            # Execute tool call
                             result = await self.mcp_client.call_tool(
                                 tool_name, tool_args
                             )
 
-                        # Display the tool result
                         self.display_tool_result(tool_name, tool_args, result)
 
-                        # Add assistant's message with tool use to chat history
                         await self.llm_client.add_assistant_message([content])
 
-                        # Add tool result to chat history
                         await self.llm_client.add_tool_result(tool_use_id, result)
 
-                        # Debug and save chat history after tool result
                         self.debug_and_save_chat_history()
+
                     else:
                         self.print_tool_cancelled()
-                        # Exit the loop if tool execution was cancelled
                         tool_used = False
                         break
 
-            # If no tool was used, add the assistant's message to chat history and exit the loop
             if not tool_used:
                 if assistant_content:
                     await self.llm_client.add_assistant_message(assistant_content)
-                    # Debug and save chat history after assistant response
                     self.debug_and_save_chat_history()
                 break
+
+    async def add_new_server(self):
+        """Add a new MCP server"""
+        self.console.print("[bold blue]Adding a new MCP server[/bold blue]")
+
+        server_id = input("Enter server ID: ").strip()
+        if not server_id:
+            self.console.print("[bold red]Server ID cannot be empty[/bold red]")
+            return
+
+        server_path = input("Enter server script path: ").strip()
+        if not server_path:
+            self.console.print("[bold red]Server path cannot be empty[/bold red]")
+            return
+
+        try:
+            server_config = MCPServerConfig(id=server_id, path=server_path)
+            with self.console.status(
+                "[bold green]Connecting to server...[/bold green]"
+            ):
+                tool_names = await self.mcp_client.add_server(server_config)
+
+            self.console.print(
+                f"[bold green]Successfully added server '{server_id}'[/bold green]"
+            )
+            self.console.print(
+                f"Available tools from this server: {', '.join(tool_names)}"
+            )
+        except Exception as e:
+            self.console.print(f"[bold red]Error adding server: {str(e)}[/bold red]")
+
+    async def remove_server(self):
+        """Remove an MCP server"""
+        servers = self.mcp_client.list_servers()
+
+        if not servers:
+            self.console.print("[bold yellow]No servers connected[/bold yellow]")
+            return
+
+        self.console.print("[bold blue]Connected servers:[/bold blue]")
+        for i, server_id in enumerate(servers, 1):
+            self.console.print(f"{i}. {server_id}")
+
+        choice = input("\nEnter server number to remove (or 'cancel'): ").strip()
+
+        if choice.lower() == "cancel":
+            return
+
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(servers):
+                server_id = servers[idx]
+                with self.console.status(
+                    f"[bold yellow]Removing server '{server_id}'...[/bold yellow]"
+                ):
+                    await self.mcp_client.remove_server(server_id)
+                self.console.print(
+                    f"[bold green]Successfully removed server '{server_id}'[/bold green]"
+                )
+            else:
+                self.console.print("[bold red]Invalid server number[/bold red]")
+        except ValueError:
+            self.console.print("[bold red]Please enter a valid number[/bold red]")
+        except Exception as e:
+            self.console.print(f"[bold red]Error removing server: {str(e)}[/bold red]")
+
+    def list_servers(self):
+        """List all connected MCP servers"""
+        servers = self.mcp_client.list_servers()
+
+        if not servers:
+            self.console.print("[bold yellow]No servers connected[/bold yellow]")
+            return
+
+        table = Table(title="Connected MCP Servers", show_header=True)
+        table.add_column("Server ID", style="cyan")
+        table.add_column("Server Path", style="green")
+        table.add_column("Tools Count", style="yellow")
+
+        for server_id in servers:
+            server_data = self.mcp_client.sessions[server_id]
+            server_path = server_data["server_path"]
+            tools_count = len(server_data["tools"])
+
+            table.add_row(server_id, server_path, str(tools_count))
+
+        self.console.print("\n")
+        self.console.print(table)
+        self.console.print("\n")
 
     async def chat_loop(self):
         """Run an interactive chat loop with improved UI"""
         self.print_welcome()
 
-        # Create prompt session with history
         session = PromptSession(
             history=FileHistory(".mcp_chat_history"),
             style=style,
@@ -321,21 +396,46 @@ class RichUI:
 
         while True:
             try:
-                # Display a fancy prompt
                 query = await session.prompt_async(
                     HTML("<prompt>Query</prompt> <user-input>❯</user-input> "),
                     multiline=False,
                 )
 
-                # Check for exit commands
-                if query.lower() in ("quit", "exit", "q"):
-                    break
+                print(f"query: {query}")
+                if query.lower().strip() == REPLCommands.EXIT:
+                    return {"action": REPLCommands.EXIT}
 
-                # Skip empty queries
+                if query.lower().strip() == REPLCommands.RELOAD:
+                    self.console.print("[bold yellow]Reloading REPL...[/bold yellow]")
+                    return {"action": REPLCommands.RELOAD}
+
                 if not query.strip():
                     continue
 
-                # Process the query
+                if query.lower().strip() == REPLCommands.LIST_MCP:
+                    self.print_available_tools()
+                    continue
+
+                if query.lower().strip() == REPLCommands.HELP:
+                    self.print_welcome()
+                    continue
+
+                if query.lower().strip() == REPLCommands.CLEAR:
+                    self.console.clear()
+                    continue
+
+                if query.lower().strip() == REPLCommands.ADD_SERVER:
+                    await self.add_new_server()
+                    continue
+
+                if query.lower().strip() == REPLCommands.REMOVE_SERVER:
+                    await self.remove_server()
+                    continue
+
+                if query.lower().strip() == REPLCommands.LIST_SERVERS:
+                    self.list_servers()
+                    continue
+
                 await self.process_query(query)
 
             except KeyboardInterrupt:
@@ -343,17 +443,68 @@ class RichUI:
             except Exception as e:
                 self.print_error(e)
 
-    async def cleanup(self):
-        """Clean up resources"""
-        await self.llm_client.cleanup()
+    def print_available_tools(self):
+        """Print available tools in a table format"""
+
+        def get_server_type(tool):
+            desc = tool["description"]
+            if "[" in desc and "]" in desc:
+                return desc[desc.find("[") + 1 : desc.find("]")]
+            return "Other"
+
+        sorted_tools = sorted(self.mcp_client.available_tools, key=get_server_type)
+        grouped_tools = groupby(sorted_tools, key=get_server_type)
+
+        for server_type, tools in grouped_tools:
+            table = Table(title=f"{server_type} Tools", show_header=True, expand=True)
+            table.add_column("Tool Name", style="cyan", no_wrap=True)
+            table.add_column("Description", style="green")
+            table.add_column("Arguments", style="yellow")
+
+            for tool in tools:
+                # Get all properties and mark required ones with *
+                args = []
+                properties = tool["input_schema"].get("properties", {})
+                required = tool["input_schema"].get("required", [])
+
+                for prop_name, prop_data in properties.items():
+                    arg_str = f"{prop_name}"
+                    if prop_name in required:
+                        arg_str += "*"
+                    if "default" in prop_data:
+                        arg_str += f"={prop_data['default']}"
+                    args.append(arg_str)
+
+                args_str = ", ".join(args) if args else "None"
+
+                # Clean up description - remove any prefix in square brackets and whitespace
+                description = tool["description"]
+                if "]" in description:
+                    description = description.split("]", 1)[1]
+                description = description.strip()
+
+                # Take first line of description
+                short_description = description.split("\n")[0].strip()
+
+                # Remove server prefix from tool name if it exists
+                tool_name = tool["name"]
+                if server_type != "Other":
+                    prefix = f"{server_type.lower()}_"
+                    if tool_name.startswith(prefix):
+                        tool_name = tool_name[len(prefix) :]
+
+                table.add_row(tool_name, short_description, args_str)
+
+            self.console.print("\n")
+            self.console.print(table)
+
+        self.console.print("\n* Required argument")
+        self.console.print("\n")
 
 
-class MCPServerConfig(BaseModel):
-    """Represents an MCP server"""
-
-    path: str
-    name: str
-    description: str
+def cli_main():
+    """Entry point for the CLI command."""
+    asyncio.run(main())
 
 
 async def main():
@@ -371,46 +522,30 @@ async def main():
     )
     args = parser.parse_args()
 
-    servers = []
-
-    if args.config:
+    while True:
+        llm_client = LLMClient()
         try:
-            with open(args.config, "r") as f:
-                config = json.load(f)
-                for server in config:
-                    server["path"] = str(
-                        (Path(args.config).parent / server["path"]).resolve()
-                    )
-                    servers.append(MCPServerConfig(**server))
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            print(f"Error loading config file: {e}")
+            mcp_orchestrator = await MCPOrchestrator.from_config(args.config)
+        except ValueError as e:
+            print(f"Error: {e}")
+            print("Usage: python client.py --config config.json")
             sys.exit(1)
 
-    if not servers:
-        print("Error: No servers provided in config file.")
-        print("Usage: python client.py --config config.json")
-        sys.exit(1)
+        ui = RichUI(
+            llm_client,
+            mcp_orchestrator,
+            auto_approve_tools=args.auto_approve_tools,
+            always_show_full_output=args.always_show_full_output,
+        )
 
-    # Initialize the clients
-    llm_client = LLMClient()
-    mcp_orchestrator = MCPOrchestrator()
-    ui = RichUI(
-        llm_client,
-        mcp_orchestrator,
-        auto_approve_tools=args.auto_approve_tools,
-        always_show_full_output=args.always_show_full_output,
-    )
+        try:
+            ui.print_available_tools()
 
-    try:
-        logger.info("Connecting to servers...")
-        for server in servers:
-            tool_names = await mcp_orchestrator.connect_to_server(server.path)
-            ui.print_connected_tools(tool_names, server.path)
-
-        # Start the chat loop
-        await ui.chat_loop()
-    finally:
-        await mcp_orchestrator.cleanup()
+            result = await ui.chat_loop()
+            if result["action"] == REPLCommands.EXIT:
+                break
+        finally:
+            await mcp_orchestrator.cleanup()
 
 
 if __name__ == "__main__":

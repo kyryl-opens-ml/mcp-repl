@@ -1,9 +1,10 @@
+import json
 import os
 import subprocess
 import time
-import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture
@@ -53,13 +54,13 @@ def mcp_process(config_path, chat_history_dir):
     process.wait(timeout=5)
 
 
-def test_mcp_repl(mcp_process, chat_history_dir):
+def test_mcp_repl_databases(mcp_process, chat_history_dir):
     """
     Test the MCP REPL application by running it as a subprocess and interacting with it.
     """
     process = mcp_process
 
-    test_queries = ["find all tables in posgress and mysql", "quit"]
+    test_queries = ["find all tables in posgress and mysql", "q!"]
 
     for query in test_queries:
         process.stdin.write(f"{query}\n")
@@ -74,7 +75,8 @@ def test_mcp_repl(mcp_process, chat_history_dir):
                 if not line:
                     break
                 output += line
-            except:
+            except Exception as e:
+                print(f"Error reading output: {e}")
                 break
 
             if len(output) > 5000 or "Query ❯" in line:
@@ -112,7 +114,3 @@ def test_mcp_repl(mcp_process, chat_history_dir):
 
         missing_tables = set(expected_tables) - set(tables_in_history)
         assert not missing_tables, f"Missing tables in chat history: {missing_tables}"
-
-
-if __name__ == "__main__":
-    test_mcp_repl()

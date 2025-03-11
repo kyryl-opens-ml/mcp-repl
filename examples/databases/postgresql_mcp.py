@@ -1,7 +1,6 @@
-import os
 import psycopg2
-from psycopg2 import sql
 from mcp.server.fastmcp import FastMCP
+from psycopg2 import sql
 
 PG_HOST = "localhost"
 PG_PORT = "5432"
@@ -14,7 +13,10 @@ conn = psycopg2.connect(
 )
 conn.autocommit = False
 
-mcp = FastMCP("PostgreSQL")
+mcp = FastMCP(
+    "PostgreSQL",
+    instructions="You are a PostgreSQL database manager. You can execute queries, create tables, and insert data into the database.",
+)
 
 
 @mcp.tool()

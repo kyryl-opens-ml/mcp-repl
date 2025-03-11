@@ -1,6 +1,4 @@
-import os
 import mysql.connector
-from mysql.connector import Error
 from mcp.server.fastmcp import FastMCP
 
 MYSQL_HOST = "localhost"
@@ -18,7 +16,10 @@ conn = mysql.connector.connect(
 )
 conn.autocommit = False
 
-mcp = FastMCP("MySQL")
+mcp = FastMCP(
+    "MySQL",
+    instructions="You are a MySQL database manager. You can execute queries, create tables, and insert data into the database.",
+)
 
 
 @mcp.tool()
