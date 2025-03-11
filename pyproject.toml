@@ -35,6 +35,10 @@ build-backend = "hatchling.build"
 dev = [
     "mcp-repl",
 ]
+infra = [
+    "kubernetes>=32.0.1",
+    "modal>=0.73.91",
+]
 
 [tool.uv.sources]
 mcp-repl = { workspace = true }

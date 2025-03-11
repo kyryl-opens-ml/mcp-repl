@@ -1,0 +1,4 @@
+[
+    { "path": "k8s_server.py", "name": "Kubernetes Manager", "description": "Kubernetes resource management" },
+    { "path": "modal_mcp.py", "name": "Modal Manager", "description": "Modal resource management" }
+]

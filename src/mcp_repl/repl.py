@@ -328,8 +328,13 @@ class RichUI:
                 )
 
                 # Check for exit commands
-                if query.lower() in ("quit", "exit", "q"):
+                if query.lower() in ("!q"):
                     break
+                
+                # Check for reload command
+                if query.lower() == "!r":
+                    self.console.print("[bold yellow]Reloading REPL...[/bold yellow]")
+                    return {"action": "reload"}
 
                 # Skip empty queries
                 if not query.strip():
@@ -342,6 +347,8 @@ class RichUI:
                 self.print_interrupted()
             except Exception as e:
                 self.print_error(e)
+        
+        return {"action": "exit"}
 
     async def cleanup(self):
         """Clean up resources"""
@@ -371,46 +378,54 @@ async def main():
     )
     args = parser.parse_args()
 
-    servers = []
+    while True:
+        servers = []
 
-    if args.config:
-        try:
-            with open(args.config, "r") as f:
-                config = json.load(f)
-                for server in config:
-                    server["path"] = str(
-                        (Path(args.config).parent / server["path"]).resolve()
-                    )
-                    servers.append(MCPServerConfig(**server))
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            print(f"Error loading config file: {e}")
+        if args.config:
+            try:
+                with open(args.config, "r") as f:
+                    config = json.load(f)
+                    for server in config:
+                        server["path"] = str(
+                            (Path(args.config).parent / server["path"]).resolve()
+                        )
+                        servers.append(MCPServerConfig(**server))
+            except (json.JSONDecodeError, FileNotFoundError) as e:
+                print(f"Error loading config file: {e}")
+                sys.exit(1)
+
+        if not servers:
+            print("Error: No servers provided in config file.")
+            print("Usage: python client.py --config config.json")
             sys.exit(1)
 
-    if not servers:
-        print("Error: No servers provided in config file.")
-        print("Usage: python client.py --config config.json")
-        sys.exit(1)
+        # Initialize the clients
+        llm_client = LLMClient()
+        mcp_orchestrator = MCPOrchestrator()
+        ui = RichUI(
+            llm_client,
+            mcp_orchestrator,
+            auto_approve_tools=args.auto_approve_tools,
+            always_show_full_output=args.always_show_full_output,
+        )
 
-    # Initialize the clients
-    llm_client = LLMClient()
-    mcp_orchestrator = MCPOrchestrator()
-    ui = RichUI(
-        llm_client,
-        mcp_orchestrator,
-        auto_approve_tools=args.auto_approve_tools,
-        always_show_full_output=args.always_show_full_output,
-    )
+        try:
+            logger.info("Connecting to servers...")
+            for server in servers:
+                tool_names = await mcp_orchestrator.connect_to_server(server.path)
+                ui.print_connected_tools(tool_names, server.path)
 
-    try:
-        logger.info("Connecting to servers...")
-        for server in servers:
-            tool_names = await mcp_orchestrator.connect_to_server(server.path)
-            ui.print_connected_tools(tool_names, server.path)
-
-        # Start the chat loop
-        await ui.chat_loop()
-    finally:
-        await mcp_orchestrator.cleanup()
+            # Start the chat loop
+            result = await ui.chat_loop()
+            
+            # Check if we need to reload or exit
+            if result["action"] == "exit":
+                break
+            # If action is "reload", the while loop will continue and reinitialize everything
+            
+        finally:
+            await ui.cleanup()
+            await mcp_orchestrator.cleanup()
 
 
 if __name__ == "__main__":
