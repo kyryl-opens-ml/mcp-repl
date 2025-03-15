@@ -501,6 +501,10 @@ class RichUI:
         self.console.print("\n* Required argument")
         self.console.print("\n")
 
+def cli_main():
+    """Entry point for the CLI command."""
+    asyncio.run(main())
+
 async def main():
     parser = argparse.ArgumentParser(description="MCP Client")
     parser.add_argument("--config", type=str, help="Path to config file")

@@ -34,7 +34,7 @@ uv run examples/databases/generate_mock_data.py
 Start the REPL:
 
 ```bash
-uv run -m mcp_repl.repl --config examples/databases/config.json --auto-approve-tools
+uv run mcp-repl --config examples/databases/config.json --auto-approve-tools
 ```
 
 ### Sample Queries
@@ -44,11 +44,3 @@ You can perform queries like:
 - "Find all tables in PostgreSQL and MySQL"
 - "Compare the structure of the 'users' table in PostgreSQL with the 'customers' table in MySQL"
 - "Count the number of records in each database"
-
-## Usage
-
-Start the REPL:
-
-```bash
-uv run -m mcp_repl.repl --config path/to/config.json
-```

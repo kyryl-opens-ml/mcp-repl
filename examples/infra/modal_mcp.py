@@ -7,7 +7,7 @@ from typing import List, Dict, Optional, Any, Union
 from datetime import datetime
 import time
 
-mcp = FastMCP("Modal CLI")
+mcp = FastMCP("Modal CLI", instructions="You are a Modal CLI. You can list, stop, and get logs for Modal apps and containers.")
 
 @mcp.tool()
 def get_apps():
