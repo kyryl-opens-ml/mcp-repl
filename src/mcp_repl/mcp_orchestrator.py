@@ -145,8 +145,8 @@ class MCPOrchestrator:
             raise ValueError(f"Server at '{server_config.path}' is already connected")
             
         await self.connect_to_server(server_config.path, server_config.id)
+        return [tool.name for tool in self.sessions[server_config.id]["tools"]]
 
-        
     async def remove_server(self, server_id: str) -> None:
         """Remove an MCP server from the orchestrator
         

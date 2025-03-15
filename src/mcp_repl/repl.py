@@ -22,7 +22,7 @@ from pydantic import BaseModel
 import traceback
 from rich.table import Table
 from itertools import groupby
-
+from mcp_repl.mcp_orchestrator import MCPServerConfig
 from mcp_repl.llm_client import LLMClient
 from mcp_repl.mcp_orchestrator import MCPOrchestrator
 
@@ -68,6 +68,9 @@ class REPLCommands(StrEnum):
     HELP = "h!"
     LIST_MCP = "l!"
     CLEAR = "c!"
+    ADD_SERVER = "add!"
+    REMOVE_SERVER = "remove!"
+    LIST_SERVERS = "servers!"
 
 class RichUI:
     """Handles the Rich UI components and user interaction"""
@@ -99,7 +102,11 @@ class RichUI:
             f"• [bold red]{REPLCommands.EXIT}[/bold red] to exit\n"
             f"• [bold yellow]{REPLCommands.RELOAD}[/bold yellow] to reload\n"
             f"• [bold green]{REPLCommands.HELP}[/bold green] for help\n"
-            f"• [bold cyan]{REPLCommands.CLEAR}[/bold cyan] to clear screen"
+            f"• [bold cyan]{REPLCommands.CLEAR}[/bold cyan] to clear screen\n"
+            f"• [bold magenta]{REPLCommands.LIST_MCP}[/bold magenta] to list available tools\n"
+            f"• [bold blue]{REPLCommands.ADD_SERVER}[/bold blue] to add a new MCP server\n"
+            f"• [bold red]{REPLCommands.REMOVE_SERVER}[/bold red] to remove an MCP server\n"
+            f"• [bold green]{REPLCommands.LIST_SERVERS}[/bold green] to list connected servers"
         )
 
     def print_connected_tools(self, tool_names, server_path):
@@ -287,6 +294,89 @@ class RichUI:
                     self.debug_and_save_chat_history()
                 break
 
+    async def add_new_server(self):
+        """Add a new MCP server"""
+        self.console.print("[bold blue]Adding a new MCP server[/bold blue]")
+        
+        server_id = input("Enter server ID: ").strip()
+        if not server_id:
+            self.console.print("[bold red]Server ID cannot be empty[/bold red]")
+            return
+        
+        server_path = input("Enter server script path: ").strip()
+        if not server_path:
+            self.console.print("[bold red]Server path cannot be empty[/bold red]")
+            return
+        
+        try:
+            server_config = MCPServerConfig(id=server_id, path=server_path)
+            with self.console.status("[bold green]Connecting to server...[/bold green]"):
+                tool_names = await self.mcp_client.add_server(server_config)
+            
+            self.console.print(f"[bold green]Successfully added server '{server_id}'[/bold green]")
+            self.console.print(f"Available tools from this server: {', '.join(tool_names)}")
+        except Exception as e:
+            self.console.print(f"[bold red]Error adding server: {str(e)}[/bold red]")
+
+    async def remove_server(self):
+        """Remove an MCP server"""
+        servers = self.mcp_client.list_servers()
+        
+        if not servers:
+            self.console.print("[bold yellow]No servers connected[/bold yellow]")
+            return
+        
+        self.console.print("[bold blue]Connected servers:[/bold blue]")
+        for i, server_id in enumerate(servers, 1):
+            self.console.print(f"{i}. {server_id}")
+        
+        choice = input("\nEnter server number to remove (or 'cancel'): ").strip()
+        
+        if choice.lower() == 'cancel':
+            return
+        
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(servers):
+                server_id = servers[idx]
+                with self.console.status(f"[bold yellow]Removing server '{server_id}'...[/bold yellow]"):
+                    await self.mcp_client.remove_server(server_id)
+                self.console.print(f"[bold green]Successfully removed server '{server_id}'[/bold green]")
+            else:
+                self.console.print("[bold red]Invalid server number[/bold red]")
+        except ValueError:
+            self.console.print("[bold red]Please enter a valid number[/bold red]")
+        except Exception as e:
+            self.console.print(f"[bold red]Error removing server: {str(e)}[/bold red]")
+
+    def list_servers(self):
+        """List all connected MCP servers"""
+        servers = self.mcp_client.list_servers()
+        
+        if not servers:
+            self.console.print("[bold yellow]No servers connected[/bold yellow]")
+            return
+        
+        table = Table(title="Connected MCP Servers", show_header=True)
+        table.add_column("Server ID", style="cyan")
+        table.add_column("Server Path", style="green")
+        table.add_column("Tools Count", style="yellow")
+        
+        for server_id in servers:
+            server_data = self.mcp_client.sessions[server_id]
+            server_path = server_data["server_path"]
+            tools_count = len(server_data["tools"])
+            
+            table.add_row(
+                server_id,
+                server_path,
+                str(tools_count)
+            )
+        
+        self.console.print("\n")
+        self.console.print(table)
+        self.console.print("\n")
+
     async def chat_loop(self):
         """Run an interactive chat loop with improved UI"""
         self.print_welcome()
@@ -315,7 +405,6 @@ class RichUI:
                     self.console.print("[bold yellow]Reloading REPL...[/bold yellow]")
                     return {"action": REPLCommands.RELOAD}
 
-
                 if not query.strip():
                     continue
                 
@@ -329,6 +418,18 @@ class RichUI:
 
                 if query.lower().strip() == REPLCommands.CLEAR:
                     self.console.clear()
+                    continue
+                
+                if query.lower().strip() == REPLCommands.ADD_SERVER:
+                    await self.add_new_server()
+                    continue
+                
+                if query.lower().strip() == REPLCommands.REMOVE_SERVER:
+                    await self.remove_server()
+                    continue
+                
+                if query.lower().strip() == REPLCommands.LIST_SERVERS:
+                    self.list_servers()
                     continue
 
                 await self.process_query(query)
