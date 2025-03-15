@@ -25,7 +25,7 @@ if not shutil.which("helm"):
     sys.exit("ERROR: Helm is not installed or not in PATH.")
 
 # Initialize Kubernetes clients and MCP server
-mcp = FastMCP("HELM MCP")
+mcp = FastMCP("HELM MCP", instructions="You are a Helm manager. You can list, install, upgrade, uninstall, and get values for Helm releases.")
 core_v1 = client.CoreV1Api()
 apps_v1 = client.AppsV1Api()
 batch_v1 = client.BatchV1Api()

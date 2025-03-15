@@ -12,8 +12,7 @@ def config_path(tmp_path):
     config_content =  [
             {
                 "path": "./examples/infra/k8s_server.py",
-                "name": "Test K8s Server",
-                "description": "Test server for K8s"
+                "id": "k8s_server"
             }
         ]
     
@@ -48,55 +47,31 @@ async def test_orchestrator_from_config_call_tool(config_path):
     result = await orchestrator.call_tool("k8s_server_apply_manifest_from_url", {"url": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/controllers/nginx-deployment.yaml"})
     assert not result.isError
 
-# @pytest.mark.asyncio
-# async def test_add_and_remove_mcp():
-#     """Test adding and removing an MCP server."""
-#     # Create a minimal orchestrator with no initial servers
-#     orchestrator = MCPOrchestrator([])
-    
-#     try:
-#         # Create a test server config
-#         test_server = MCPServerConfig(
-#             path=str(Path("./examples/infra/k8s_server.py").resolve()),
-#             name="Test K8s Server",
-#             description="Test server for K8s"
-#         )
-        
-#         # Add the server
-#         tools = await orchestrator.add_mcp(test_server)
-        
-#         # Verify server was added and connected
-#         assert test_server.path in orchestrator.connected_servers
-#         assert len(orchestrator.available_tools) > 0
-#         assert len(tools) > 0
-        
-#         # Remove the server
-#         await orchestrator.remove_mcp(test_server.path)
-        
-#         # Verify server was removed
-#         assert test_server.path not in orchestrator.connected_servers
-#         assert len(orchestrator.available_tools) == 0
-#     finally:
-#         await orchestrator.cleanup()
 
+@pytest.mark.asyncio
+async def test_orchestrator_add_and_remove_servers(config_path):
+    """Test adding and removing servers from the orchestrator."""
+    orchestrator = await MCPOrchestrator.from_server_configs([
+        MCPServerConfig(
+            path="./examples/infra/k8s_server.py",
+            id="k8s_server_1"
+        )
+    ])
 
-# @pytest.mark.asyncio
-# async def test_call_tool(config_path):
-#     """Test calling a tool from a connected server."""
-#     orchestrator = await MCPOrchestrator.from_config(config_path)
-    
-#     try:
-#         # Verify we have tools available
-#         assert len(orchestrator.tools) > 0
-        
-#         # Get the first tool for testing
-#         tool_name, _, _ = orchestrator.tools[0]
-        
-#         # This is a basic test that just verifies the call doesn't raise an exception
-#         # In a real test, you would use a mock server or test-specific tool with known behavior
-#         with pytest.raises(Exception):
-#             # We expect this to fail since we're not providing valid arguments
-#             # but it should fail in a controlled way, not due to connection issues
-#             await orchestrator.call_tool(tool_name, {})
-#     finally:
-#         await orchestrator.cleanup()
+    assert len(orchestrator.list_servers()) == 1
+    assert len(orchestrator.available_tools) == 7 
+
+    new_server = MCPServerConfig(
+        path="./examples/infra/helm_server.py",
+        id="helm_server_1"
+    )
+    await orchestrator.add_server(new_server)
+
+    assert len(orchestrator.list_servers()) == 2
+    assert len(orchestrator.available_tools) == 15
+
+    await orchestrator.remove_server("helm_server_1")
+    await orchestrator.remove_server("k8s_server_1")
+
+    assert len(orchestrator.list_servers()) == 0
+    assert len(orchestrator.available_tools) == 0

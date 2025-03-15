@@ -68,10 +68,6 @@ class REPLCommands(StrEnum):
     HELP = "h!"
     LIST_MCP = "l!"
     CLEAR = "c!"
-    # ADD_MCP = "!add-mcp"
-    # REMOVE_MCP = "!remove-mcp"
-
-    # USE_MCP = "!use-mcp"
 
 class RichUI:
     """Handles the Rich UI components and user interaction"""

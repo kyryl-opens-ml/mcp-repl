@@ -19,7 +19,7 @@ except config.ConfigException:
     except Exception as e:
         sys.exit(f"ERROR: Cannot connect to Kubernetes: {str(e)}")
 
-mcp = FastMCP("Kubernetes Manager")
+mcp = FastMCP("Kubernetes Manager", instructions="You are a Kubernetes manager. You can create, delete, and get resources from a Kubernetes cluster.")
 core_v1 = client.CoreV1Api()
 apps_v1 = client.AppsV1Api()
 batch_v1 = client.BatchV1Api()
