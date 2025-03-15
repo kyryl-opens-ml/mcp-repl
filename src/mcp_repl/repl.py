@@ -63,13 +63,14 @@ style = Style.from_dict(
 kb = KeyBindings()
 
 class REPLCommands(StrEnum):
-    EXIT = "!q"
-    RELOAD = "!r"
-    HELP = "!h"
-    CLEAR = "!c"
+    EXIT = "q!"
+    RELOAD = "r!"
+    HELP = "h!"
+    LIST_MCP = "l!"
+    CLEAR = "c!"
     # ADD_MCP = "!add-mcp"
     # REMOVE_MCP = "!remove-mcp"
-    # LIST_MCP = "!list-mcp"
+
     # USE_MCP = "!use-mcp"
 
 class RichUI:
@@ -309,14 +310,29 @@ class RichUI:
                     multiline=False,
                 )
 
-                if query.lower() in (REPLCommands.EXIT):
+                print(f"query: {query}")
+                if query.lower().strip() == REPLCommands.EXIT:
+                    
                     return {"action": REPLCommands.EXIT}
                 
-                if query.lower() == REPLCommands.RELOAD:
+                if query.lower().strip() == REPLCommands.RELOAD:
                     self.console.print("[bold yellow]Reloading REPL...[/bold yellow]")
                     return {"action": REPLCommands.RELOAD}
 
+
                 if not query.strip():
+                    continue
+                
+                if query.lower().strip() == REPLCommands.LIST_MCP:
+                    self.print_available_tools()
+                    continue
+
+                if query.lower().strip() == REPLCommands.HELP:
+                    self.print_welcome()
+                    continue
+
+                if query.lower().strip() == REPLCommands.CLEAR:
+                    self.console.clear()
                     continue
 
                 await self.process_query(query)
@@ -329,14 +345,12 @@ class RichUI:
 
     def print_available_tools(self):
         """Print available tools in a table format"""
-        # Group tools by their server type (extracted from description)
         def get_server_type(tool):
             desc = tool['description']
             if '[' in desc and ']' in desc:
                 return desc[desc.find('[')+1:desc.find(']')]
             return 'Other'
 
-        # Sort tools by server type for grouped display
         sorted_tools = sorted(self.mcp_client.available_tools, key=get_server_type)
         grouped_tools = groupby(sorted_tools, key=get_server_type)
 
