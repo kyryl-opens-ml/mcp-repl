@@ -2,12 +2,21 @@ from contextlib import AsyncExitStack
 from typing import Dict, Any, List
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from pydantic import BaseModel
+import json
+from pathlib import Path
 
+
+class MCPServerConfig(BaseModel):
+    """Represents an MCP server"""
+    path: str
+    name: str
+    description: str
 
 class MCPOrchestrator:
     """Handles connections to MCP servers and tool execution"""
 
-    def __init__(self):
+    def __init__(self, servers: List[MCPServerConfig]):
         self.tools = []
         self.available_tools = []
         self.sessions = {}
@@ -15,7 +24,38 @@ class MCPOrchestrator:
         self.stdio = None
         self.write = None
         self.connected_servers = []
+        self.servers = servers
 
+    @classmethod
+    async def from_config(cls, config_path: str) -> 'MCPOrchestrator':
+        """Create MCPOrchestrator instance from a config file and connect to all servers"""
+        with open(config_path, "r") as f:
+            config = json.load(f)
+            print(f"config: {config}")
+            servers = []
+            for server in config:
+                if Path(server["path"]).is_absolute() or Path(server["path"]).exists():
+                    server["path"] = str(Path(server["path"]))
+                else:
+                    resolved_path = (Path(config_path).parent / server["path"]).resolve()
+                    if not resolved_path.exists():
+                        raise ValueError(
+                            f"Server path '{server['path']}' not found. "
+                            f"Path should be either absolute or relative to the config file location: {Path(config_path).parent}"
+                        )
+                    server["path"] = str(resolved_path)
+                servers.append(MCPServerConfig(**server))
+            
+            if not servers:
+                raise ValueError("No servers configured")
+                
+            orchestrator = cls(servers)
+            
+            for server in servers:
+                await orchestrator.connect_to_server(server.path)
+                
+            return orchestrator
+                
     async def connect_to_server(self, server_script_path: str):
         """Connect to an MCP server
 
@@ -88,11 +128,40 @@ class MCPOrchestrator:
 
         raise ValueError(f"Tool '{tool_name}' not found in any connected server")
 
-    async def connect_to_multiple_servers(self, server_paths: List[str]):
-        """Connect to multiple MCP servers"""
-        for path in enumerate(server_paths):
-            await self.connect_to_server(path)
-
     async def cleanup(self):
         """Clean up resources"""
         await self.exit_stack.aclose()
+
+    def get_connected_mcps(self) -> List[MCPServerConfig]:
+        """Get list of all connected MCP servers"""
+        return [
+            server for server in self.servers 
+            if server.path in self.connected_servers
+        ]
+
+    async def add_mcp(self, server: MCPServerConfig) -> List[str]:
+        """Add and connect to a new MCP server
+        
+        Returns:
+            List of tool names provided by the server
+        """
+        if server.path in self.connected_servers:
+            raise ValueError(f"Server {server.path} is already connected")
+        
+        self.servers.append(server)
+        return await self.connect_to_server(server.path)
+
+    async def remove_mcp(self, server_path: str) -> None:
+        """Remove and disconnect from an MCP server"""
+        if server_path not in self.connected_servers:
+            raise ValueError(f"Server {server_path} is not connected")
+        
+        # Remove from sessions and update tools
+        if server_path in self.sessions:
+            session_data = self.sessions.pop(server_path)
+            await session_data["session"].shutdown()
+        
+        # Remove from servers list
+        self.servers = [s for s in self.servers if s.path != server_path]
+        self.connected_servers.remove(server_path)
+        self._update_available_tools()

@@ -51,8 +51,3 @@ When asked to write code or perform general tasks unrelated to the available too
             ],
         }
         self.chat_history.append(tool_result_message)
-
-
-    async def cleanup(self):
-        """Clean up resources"""
-        pass
