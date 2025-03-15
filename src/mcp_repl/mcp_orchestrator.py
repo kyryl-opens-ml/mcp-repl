@@ -16,15 +16,11 @@ class MCPServerConfig(BaseModel):
 class MCPOrchestrator:
     """Handles connections to MCP servers and tool execution"""
 
-    def __init__(self, servers: List[MCPServerConfig]):
+    def __init__(self):
         self.tools = []
         self.available_tools = []
         self.sessions = {}
         self.exit_stack = AsyncExitStack()
-        self.stdio = None
-        self.write = None
-        self.connected_servers = []
-        self.servers = servers
 
     @classmethod
     async def from_config(cls, config_path: str) -> 'MCPOrchestrator':
@@ -49,7 +45,7 @@ class MCPOrchestrator:
             if not servers:
                 raise ValueError("No servers configured")
                 
-            orchestrator = cls(servers)
+            orchestrator = cls()
             
             for server in servers:
                 await orchestrator.connect_to_server(server.path)
@@ -94,8 +90,6 @@ class MCPOrchestrator:
         }
 
         self._update_available_tools()
-        self.connected_servers.append(server_script_path)
-
         return [f"{server_name}_{tool.name}" for tool in server_tools]
 
     def _update_available_tools(self):
@@ -131,37 +125,3 @@ class MCPOrchestrator:
     async def cleanup(self):
         """Clean up resources"""
         await self.exit_stack.aclose()
-
-    def get_connected_mcps(self) -> List[MCPServerConfig]:
-        """Get list of all connected MCP servers"""
-        return [
-            server for server in self.servers 
-            if server.path in self.connected_servers
-        ]
-
-    async def add_mcp(self, server: MCPServerConfig) -> List[str]:
-        """Add and connect to a new MCP server
-        
-        Returns:
-            List of tool names provided by the server
-        """
-        if server.path in self.connected_servers:
-            raise ValueError(f"Server {server.path} is already connected")
-        
-        self.servers.append(server)
-        return await self.connect_to_server(server.path)
-
-    async def remove_mcp(self, server_path: str) -> None:
-        """Remove and disconnect from an MCP server"""
-        if server_path not in self.connected_servers:
-            raise ValueError(f"Server {server_path} is not connected")
-        
-        # Remove from sessions and update tools
-        if server_path in self.sessions:
-            session_data = self.sessions.pop(server_path)
-            await session_data["session"].shutdown()
-        
-        # Remove from servers list
-        self.servers = [s for s in self.servers if s.path != server_path]
-        self.connected_servers.remove(server_path)
-        self._update_available_tools()

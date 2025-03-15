@@ -39,8 +39,14 @@ async def test_orchestrator_from_config_available_tools(config_path):
 async def test_orchestrator_from_config_call_tool(config_path):
     """Test creating an orchestrator from config file."""
     orchestrator = await MCPOrchestrator.from_config(config_path)
+    
+    result = await orchestrator.call_tool("k8s_server_delete_resource", {"resource_type": "deployment", "name": "nginx-deployment", "namespace": "default"})
+    assert not result.isError
 
+    await asyncio.sleep(2)
 
+    result = await orchestrator.call_tool("k8s_server_apply_manifest_from_url", {"url": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/controllers/nginx-deployment.yaml"})
+    assert not result.isError
 
 # @pytest.mark.asyncio
 # async def test_add_and_remove_mcp():

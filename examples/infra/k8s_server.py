@@ -267,18 +267,15 @@ def apply_manifest_from_url(url: str, namespace: str = "default") -> str:
         import requests
         import tempfile
         
-        # Verify URL is accessible and download content
         response = requests.get(url)
         if response.status_code >= 400:
             return f"Error: Unable to access URL {url}, status code: {response.status_code}"
         
-        # Save content to a temporary file
         with tempfile.NamedTemporaryFile(suffix='.yaml', delete=False) as temp_file:
             temp_file.write(response.content)
             temp_path = temp_file.name
         
         try:
-            # Use the kubernetes-client utility to create from yaml
             from kubernetes.utils import create_from_yaml
             
             api_client = client.ApiClient()
@@ -288,17 +285,8 @@ def apply_manifest_from_url(url: str, namespace: str = "default") -> str:
                 verbose=False,
                 namespace=namespace
             )
-            
-            # Format the response
-            results = []
-            for obj in created_objects:
-                kind = obj.kind
-                name = obj.metadata.name
-                results.append(f"{kind}/{name} created or configured")
-            
-            return "\n".join(results) if results else "No resources created or configured"
+            return f'Created {created_objects} resources'
         finally:
-            # Clean up the temporary file
             os.unlink(temp_path)
             
     except Exception as e:
