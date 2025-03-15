@@ -18,7 +18,7 @@ conn = mysql.connector.connect(
 )
 conn.autocommit = False
 
-mcp = FastMCP("MySQL")
+mcp = FastMCP("MySQL", instructions="You are a MySQL database manager. You can execute queries, create tables, and insert data into the database.")
 
 
 @mcp.tool()

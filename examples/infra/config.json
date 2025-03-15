@@ -1,0 +1,5 @@
+[
+    { "path": "k8s_server.py", "id": "k8s_server"},
+    { "path": "helm_server.py", "id": "helm_server"},
+    { "path": "modal_mcp.py", "id": "modal_mcp"}
+]
