@@ -21,8 +21,12 @@ uv add mcp-repl
 
 ## Examples
 
-- [Databases](./examples/databases/)
-- [Infrastructure](./examples/infra/) 
+**🔥 Check out our real-world examples to see mcp-repl in action! 🔥**
+
+- **[Databases](./examples/databases/)** - Database administrators: See how to query, monitor, and manage your databases with natural language
+- **[Infrastructure](./examples/infra/)** - DevOps engineers: Explore examples for managing cloud resources, monitoring systems, and automating infrastructure tasks
+
+Each example includes sample configurations and common usage patterns to help you get started quickly.
 
 
 ## Usage

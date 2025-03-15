@@ -1,54 +1,45 @@
-## Databases Example
+
+## Infrastructure Example
 
 This example demonstrates how you can:
 
-- Set up 3 databases (PostgreSQL, MySQL, Redis) in Kubernetes with mock data
-- Run MCP servers for each dataset
-- Interact with all databases from a single REPL
+- Manage Kubernetes resources directly (pods, deployments, services, jobs)
+- Interact with Helm to manage releases and charts
+- Control and monitor Modal apps and containers
 
 ### Key Features
 
-- Natural language queries across multiple databases
-- Comparison of data structures across systems
-- Execution of complex operations seamlessly
+- Natural language management of Kubernetes resources
+- Helm chart installation, upgrade, and management through intuitive commands
+- Modal CLI integration for managing apps and containers seamlessly
+- Unified REPL interface to interact with Kubernetes, Helm, and Modal simultaneously
 
 ### Running the Example
 
-Setup infrastructure (requires `kind` and `helm`):
+Setup infrastructure (requires `kubectl`, `helm`, and `modal` CLI):
 
 ```bash
-bash examples/databases/setup.sh
+bash examples/infra/setup.sh
 ```
 
-Install databases related dependencies
-```bash
-uv add mcp-repl['databases']
-```
-
-Generate mock data:
+Install infrastructure related dependencies:
 
 ```bash
-uv run examples/databases/generate_mock_data.py
+uv add mcp-repl['infra']
 ```
 
 Start the REPL:
 
 ```bash
-uv run -m mcp_repl.repl --config examples/databases/config.json --auto-approve-tools
+uv run mcp-repl --config examples/infra/config.json --auto-approve-tools
 ```
 
 ### Sample Queries
 
-You can perform queries like:
+You can perform operations like:
 
-- "Find all tables in PostgreSQL and MySQL"
-- "Compare the structure of the 'users' table in PostgreSQL with the 'customers' table in MySQL"
-- "Count the number of records in each database"
-
-## Usage
-
-Start the REPL:
-
-```bash
-uv run -m mcp_repl.repl --config path/to/config.json
-```
+- "List all pods in the default namespace"
+- "Deploy a new nginx service with 3 replicas"
+- "Install the prometheus chart with custom values"
+- "Scale the auth deployment to 5 replicas"
+- "Show logs for the api pod"
