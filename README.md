@@ -2,6 +2,10 @@
 
 A lightweight REPL (Read-Eval-Print Loop) for interacting with various services through MCP (Model Context Protocol).
 
+[![PyPI version](https://badge.fury.io/py/mcp-repl.svg)](https://pypi.org/project/mcp-repl/)
+[![Databases Tests](https://github.com/kyryl-opens-ml/mcp-repl/actions/workflows/databases-example-test.yaml/badge.svg)](https://github.com/kyryl-opens-ml/mcp-repl/actions/workflows/databases-example-test.yaml)
+[![Infrastructure Tests](https://github.com/kyryl-opens-ml/mcp-repl/actions/workflows/infra-example-test.yaml/badge.svg)](https://github.com/kyryl-opens-ml/mcp-repl/actions/workflows/infra-example-test.yaml)
+
 ## Overview
 
 `mcp-repl` is designed for efficient development, debugging, and testing of MCP servers. It provides an intuitive command-line interface that's simpler than using the Cloud Desktop app, allowing developers to quickly:
@@ -19,6 +23,30 @@ Install via pip or uv:
 uv add mcp-repl
 ```
 
+## Usage
+
+Start the REPL:
+
+```bash
+uv run mcp-repl --config path/to/config.json
+```
+
+## Examples
+
+**🔥 Check out our real-world examples to see mcp-repl in action! 🔥**
+
+- **[Databases](./examples/databases/)** - Database administrators: See how to query, monitor, and manage your databases with natural language
+- **[Infrastructure](./examples/infra/)** - DevOps engineers: Explore examples for managing cloud resources, monitoring systems, and automating infrastructure tasks
+
+Each example includes sample configurations and common usage patterns to help you get started quickly.
+
+
+### Optional Flags
+
+- `--auto-approve-tools`: Automatically approve all tool executions
+- `--always-show-full-output`: Always display complete tool outputs
+- `--chat-history-dir PATH`: Directory to save chat history (default: `./chat_history`)
+
 ### Development Installation
 
 Clone and install in editable mode:
@@ -28,67 +56,6 @@ git clone https://github.com/yourusername/mcp-repl.git
 cd mcp-repl
 uv venv
 ```
-
-## Databases Example
-
-This example demonstrates how you can:
-
-- Set up 3 databases (PostgreSQL, MySQL, Redis) in Kubernetes with mock data
-- Run MCP servers for each dataset
-- Interact with all databases from a single REPL
-
-### Key Features
-
-- Natural language queries across multiple databases
-- Comparison of data structures across systems
-- Execution of complex operations seamlessly
-
-### Running the Example
-
-Setup infrastructure (requires `kind` and `helm`):
-
-```bash
-bash examples/databases/setup.sh
-```
-
-Install databases related dependencies
-```bash
-uv add mcp-repl['databases']
-```
-
-Generate mock data:
-
-```bash
-uv run examples/databases/generate_mock_data.py
-```
-
-Start the REPL:
-
-```bash
-uv run -m mcp_repl.repl --config examples/databases/config.json --auto-approve-tools
-```
-
-### Sample Queries
-
-You can perform queries like:
-
-- "Find all tables in PostgreSQL and MySQL"
-- "Compare the structure of the 'users' table in PostgreSQL with the 'customers' table in MySQL"
-- "Count the number of records in each database"
-
-## Usage
-
-Start the REPL:
-
-```bash
-uv run -m mcp_repl.repl --config path/to/config.json
-```
-
-### Optional Flags
-
-- `--auto-approve-tools`: Automatically approve all tool executions
-- `--always-show-full-output`: Always display complete tool outputs
-- `--chat-history-dir PATH`: Directory to save chat history (default: `./chat_history`)
 
 ## Testing
 

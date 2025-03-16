@@ -1,8 +1,9 @@
 import random
-from faker import Faker
+
 import mysql.connector
 import psycopg2
 import redis
+from faker import Faker
 
 fake = Faker()
 

@@ -1,6 +1,6 @@
 [project]
 name = "mcp-repl"
-version = "0.1.2"
+version = "0.1.3"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -11,6 +11,7 @@ dependencies = [
     "aiohttp>=3.11.13",
     "anthropic>=0.49.0",
     "mcp[cli]>=1.3.0",
+    "openai>=1.65.5",
     "prompt-toolkit>=3.0.50",
     "python-dotenv>=1.0.1",
     "ruff>=0.9.9",
@@ -25,7 +26,15 @@ databases = [
 ]
 test = [
     "pytest>=7.4.0",
+    "pytest-asyncio>=0.25.3",
 ]
+infra = [
+    "kubernetes>=32.0.1",
+    "modal>=0.73.106",
+]
+
+[project.scripts]
+mcp-repl = "mcp_repl.repl:cli_main"
 
 [build-system]
 requires = ["hatchling"]
@@ -34,6 +43,10 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "mcp-repl",
+]
+infra = [
+    "kubernetes>=32.0.1",
+    "modal>=0.73.91",
 ]
 
 [tool.uv.sources]

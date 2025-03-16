@@ -10,7 +10,10 @@ redis_client = redis.Redis(
     host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD
 )
 
-mcp = FastMCP("Redis")
+mcp = FastMCP(
+    "Redis",
+    instructions="You are a Redis database manager. You can set, get, and list keys in Redis.",
+)
 
 
 @mcp.tool()

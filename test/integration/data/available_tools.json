@@ -1,0 +1,187 @@
+[
+  {
+    "name": "k8s_server_get_resources",
+    "description": "[K8S_SERVER] \n    Get Kubernetes resources of specified type.\n\n    Args:\n        resource_type: Type of resource (pod, deployment, service, job)\n        namespace: Kubernetes namespace\n        name: Optional specific resource name\n\n    Returns:\n        JSON string with resource information\n    ",
+    "input_schema": {
+      "properties": {
+        "resource_type": {
+          "title": "Resource Type",
+          "type": "string"
+        },
+        "namespace": {
+          "default": "default",
+          "title": "Namespace",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        }
+      },
+      "required": [
+        "resource_type"
+      ],
+      "title": "get_resourcesArguments",
+      "type": "object"
+    }
+  },
+  {
+    "name": "k8s_server_create_resource",
+    "description": "[K8S_SERVER] \n    Create a Kubernetes resource from a JSON manifest.\n\n    Args:\n        resource_type: Type of resource (pod, deployment, service, job)\n        namespace: Kubernetes namespace\n        manifest: JSON string with resource definition\n\n    Returns:\n        Result of creation operation\n    ",
+    "input_schema": {
+      "properties": {
+        "resource_type": {
+          "title": "Resource Type",
+          "type": "string"
+        },
+        "namespace": {
+          "title": "Namespace",
+          "type": "string"
+        },
+        "manifest": {
+          "title": "Manifest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resource_type",
+        "namespace",
+        "manifest"
+      ],
+      "title": "create_resourceArguments",
+      "type": "object"
+    }
+  },
+  {
+    "name": "k8s_server_delete_resource",
+    "description": "[K8S_SERVER] \n    Delete a Kubernetes resource.\n\n    Args:\n        resource_type: Type of resource (pod, deployment, service, job)\n        name: Name of the resource to delete\n        namespace: Kubernetes namespace\n\n    Returns:\n        Result of deletion operation\n    ",
+    "input_schema": {
+      "properties": {
+        "resource_type": {
+          "title": "Resource Type",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "namespace": {
+          "default": "default",
+          "title": "Namespace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resource_type",
+        "name"
+      ],
+      "title": "delete_resourceArguments",
+      "type": "object"
+    }
+  },
+  {
+    "name": "k8s_server_get_pod_logs",
+    "description": "[K8S_SERVER] \n    Get logs from a pod.\n\n    Args:\n        pod_name: Name of the pod\n        namespace: Kubernetes namespace\n        container: Optional container name (if pod has multiple containers)\n        tail_lines: Number of lines to return from the end\n\n    Returns:\n        Pod logs\n    ",
+    "input_schema": {
+      "properties": {
+        "pod_name": {
+          "title": "Pod Name",
+          "type": "string"
+        },
+        "namespace": {
+          "default": "default",
+          "title": "Namespace",
+          "type": "string"
+        },
+        "container": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Container"
+        },
+        "tail_lines": {
+          "default": 100,
+          "title": "Tail Lines",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "pod_name"
+      ],
+      "title": "get_pod_logsArguments",
+      "type": "object"
+    }
+  },
+  {
+    "name": "k8s_server_describe_resource",
+    "description": "[K8S_SERVER] \n    Get detailed information about a Kubernetes resource.\n\n    Args:\n        resource_type: Type of resource (pod, deployment, service, job)\n        name: Name of the resource\n        namespace: Kubernetes namespace\n\n    Returns:\n        Detailed description of the resource\n    ",
+    "input_schema": {
+      "properties": {
+        "resource_type": {
+          "title": "Resource Type",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "namespace": {
+          "default": "default",
+          "title": "Namespace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "resource_type",
+        "name"
+      ],
+      "title": "describe_resourceArguments",
+      "type": "object"
+    }
+  },
+  {
+    "name": "k8s_server_get_namespaces",
+    "description": "[K8S_SERVER] \n    List all namespaces in the cluster.\n\n    Returns:\n        JSON string with namespace information\n    ",
+    "input_schema": {
+      "properties": {},
+      "title": "get_namespacesArguments",
+      "type": "object"
+    }
+  },
+  {
+    "name": "k8s_server_apply_manifest_from_url",
+    "description": "[K8S_SERVER] \n    Apply a Kubernetes manifest from a URL using the Kubernetes client.\n    \n    Args:\n        url: URL of the manifest file\n        namespace: Kubernetes namespace to apply the manifest to\n    \n    Returns:\n        Result of the apply operation\n    ",
+    "input_schema": {
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "namespace": {
+          "default": "default",
+          "title": "Namespace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "apply_manifest_from_urlArguments",
+      "type": "object"
+    }
+  }
+]
