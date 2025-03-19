@@ -1,15 +1,27 @@
 import psycopg2
 from mcp.server.fastmcp import FastMCP
 from psycopg2 import sql
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
-PG_HOST = "localhost"
-PG_PORT = "5432"
-PG_USER = "postgres"
-PG_PASSWORD = "postgres"
-PG_DATABASE = "postgres"
+class PostgresSettings(BaseSettings):
+    PG_HOST: str = Field(..., description="PostgreSQL host")
+    PG_PORT: str = Field(..., description="PostgreSQL port")
+    PG_USER: str = Field(..., description="PostgreSQL user")
+    PG_PASSWORD: str = Field(..., description="PostgreSQL password")
+    PG_DATABASE: str = Field(..., description="PostgreSQL database name")
+
+try:
+    settings = PostgresSettings()
+except Exception as e:
+    raise ValueError(f"Failed to load PostgreSQL settings: {e}")
 
 conn = psycopg2.connect(
-    host=PG_HOST, port=PG_PORT, user=PG_USER, password=PG_PASSWORD, dbname=PG_DATABASE
+    host=settings.PG_HOST,
+    port=settings.PG_PORT,
+    user=settings.PG_USER,
+    password=settings.PG_PASSWORD,
+    dbname=settings.PG_DATABASE
 )
 conn.autocommit = False
 
