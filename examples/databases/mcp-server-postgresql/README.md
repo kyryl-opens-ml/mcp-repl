@@ -1,12 +1,12 @@
-# mcp-server-k8s: A Kubernetes MCP Server
+# mcp-server-postgresql: A PostgreSQL MCP Server
 
 > The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that enables seamless integration between LLM applications and external data sources and tools. Whether you're building an AI-powered IDE, enhancing a chat interface, or creating custom AI workflows, MCP provides a standardized way to connect LLMs with the context they need.
 
-This repository is an example of how to create an MCP server for managing Kubernetes resources.
+This repository is an example of how to create an MCP server for managing PostgreSQL databases.
 
 ## Overview
 
-A Model Context Protocol server for interacting with Kubernetes clusters. It provides tools for creating, reading, updating, and deleting Kubernetes resources, as well as observability features like log retrieval and resource inspection.
+A Model Context Protocol server for interacting with PostgreSQL. It provides tools for executing queries, creating tables, inserting rows of data, and retrieving results.
 
 ## Components
 
@@ -14,52 +14,38 @@ A Model Context Protocol server for interacting with Kubernetes clusters. It pro
 
 The server implements the following tools:
 
-#### Resource Management
-- `get_resources`: Retrieve Kubernetes resources
-  - Takes `resource_type` (pod, deployment, service, job), `namespace` (default: "default"), and optional `name`
-  - Returns JSON-formatted resource information
+- `execute_query`: Execute an arbitrary SQL query
+  - Takes a `query` string
+  - Returns results for SELECT-like statements, or a success message for others
 
-- `create_resource`: Create new Kubernetes resources
-  - Takes `resource_type`, `namespace`, and `manifest` (JSON string)
-  - Creates the specified resource in the cluster
+- `create_table`: Create a new table
+  - Takes a `name` and a `schema` (column definitions)
+  - Creates the specified table
 
-- `delete_resource`: Remove Kubernetes resources
-  - Takes `resource_type`, `name`, and `namespace` (default: "default")
-  - Deletes the specified resource
+- `insert_data`: Insert a row of data into a table
+  - Takes a `table` name and a `data` dict of column values
+  - Inserts the specified row
 
-#### Observability
-- `get_pod_logs`: Retrieve container logs
-  - Takes `pod_name`, `namespace` (default: "default"), optional `container`, and `tail_lines` (default: 100)
-  - Returns pod logs
-
-- `describe_resource`: Get detailed resource information
-  - Takes `resource_type`, `name`, and `namespace` (default: "default")
-  - Returns detailed JSON description of the resource
-
-- `get_namespaces`: List all namespaces
-  - Returns JSON array of namespace information
-
-#### Advanced Features
-- `apply_manifest_from_url`: Apply Kubernetes manifests from URLs
-  - Takes `url` and optional `namespace` (default: "default")
-  - Downloads and applies the manifest file
+- `fetch_data`: Fetch data by executing a SELECT query
+  - Takes a `query` string
+  - Returns matching rows as a result set
 
 ## Configuration
 
-The server automatically configures Kubernetes client using:
-1. In-cluster configuration (when running inside Kubernetes)
-2. Local kubeconfig file (when running locally)
+The server connects to PostgreSQL using host, port, user, password, and database name.
+By default, these are set in the source code, but they can be overridden by environment
+variables or modified directly in the configuration.
 
 ## Quickstart
 
 #### Claude Desktop
 
-On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
+On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`  
 On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 
 ```json
 {
-  "kubernetes": {
+  "postgresql": {
     "command": "uvx",
     "args": [
       "mcp-server-postgresql"
