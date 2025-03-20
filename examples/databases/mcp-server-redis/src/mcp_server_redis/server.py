@@ -1,13 +1,24 @@
-import redis
 from mcp.server.fastmcp import FastMCP
+import redis
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
-REDIS_HOST = "localhost"
-REDIS_PORT = 6379
-REDIS_DB = 0
-REDIS_PASSWORD = "redis"
+class RedisSettings(BaseSettings):
+    REDIS_HOST: str = Field(..., description="Redis host")
+    REDIS_PORT: int = Field(..., description="Redis port")
+    REDIS_DB: int = Field(..., description="Redis database number")
+    REDIS_PASSWORD: str = Field(..., description="Redis password")
+
+try:
+    settings = RedisSettings()
+except Exception as e:
+    raise ValueError(f"Failed to load Redis settings: {e}")
 
 redis_client = redis.Redis(
-    host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD
+    host=settings.REDIS_HOST,
+    port=settings.REDIS_PORT,
+    db=settings.REDIS_DB,
+    password=settings.REDIS_PASSWORD
 )
 
 mcp = FastMCP(

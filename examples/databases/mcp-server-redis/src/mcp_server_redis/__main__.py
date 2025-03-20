@@ -1,3 +1,3 @@
-from mcp_server_k8s import main
+from mcp_server_redis import main
 
 main()
