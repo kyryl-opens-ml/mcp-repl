@@ -1,3 +1,4 @@
+ // Start of Selection
 # mcp-server-postgresql: A PostgreSQL MCP Server
 
 > The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that enables seamless integration between LLM applications and external data sources and tools. Whether you're building an AI-powered IDE, enhancing a chat interface, or creating custom AI workflows, MCP provides a standardized way to connect LLMs with the context they need.
@@ -32,9 +33,15 @@ The server implements the following tools:
 
 ## Configuration
 
-The server connects to PostgreSQL using host, port, user, password, and database name.
-By default, these are set in the source code, but they can be overridden by environment
-variables or modified directly in the configuration.
+The server connects to PostgreSQL using the following environment variables (all are required):
+
+- `PG_HOST`: PostgreSQL host  
+- `PG_PORT`: PostgreSQL port  
+- `PG_USER`: PostgreSQL user  
+- `PG_PASSWORD`: PostgreSQL password  
+- `PG_DATABASE`: PostgreSQL database name  
+
+If any of these variables are missing, the server will raise an error during startup. Make sure to set each of these before running the server.
 
 ## Quickstart
 
