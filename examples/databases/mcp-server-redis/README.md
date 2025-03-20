@@ -1,12 +1,14 @@
-# mcp-server-k8s: A Kubernetes MCP Server
+# mcp-server-redis: A Redis MCP Server
 
 > The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that enables seamless integration between LLM applications and external data sources and tools. Whether you're building an AI-powered IDE, enhancing a chat interface, or creating custom AI workflows, MCP provides a standardized way to connect LLMs with the context they need.
 
-This repository is an example of how to create an MCP server for managing Kubernetes resources.
+This repository is an example of how to create an MCP server for managing Redis data.
+
+[![PyPI version](https://badge.fury.io/py/mcp-server-redis.svg)](https://pypi.org/project/mcp-server-redis/)
 
 ## Overview
 
-A Model Context Protocol server for interacting with Kubernetes clusters. It provides tools for creating, reading, updating, and deleting Kubernetes resources, as well as observability features like log retrieval and resource inspection.
+A Model Context Protocol server for interacting with Redis. It provides tools for setting, retrieving, listing, and deleting keys in Redis.
 
 ## Components
 
@@ -14,55 +16,46 @@ A Model Context Protocol server for interacting with Kubernetes clusters. It pro
 
 The server implements the following tools:
 
-#### Resource Management
-- `get_resources`: Retrieve Kubernetes resources
-  - Takes `resource_type` (pod, deployment, service, job), `namespace` (default: "default"), and optional `name`
-  - Returns JSON-formatted resource information
+- `set_value`: Set a specified key to a given value
+  - Takes a `key` (string) and a `value` (string)
+  - Returns a confirmation message upon success
 
-- `create_resource`: Create new Kubernetes resources
-  - Takes `resource_type`, `namespace`, and `manifest` (JSON string)
-  - Creates the specified resource in the cluster
+- `get_value`: Retrieve the value of a specified key
+  - Takes a `key` (string)
+  - Returns the value as a string, or `None` if the key does not exist
 
-- `delete_resource`: Remove Kubernetes resources
-  - Takes `resource_type`, `name`, and `namespace` (default: "default")
-  - Deletes the specified resource
+- `list_keys`: List Redis keys matching a given pattern
+  - Takes a `pattern` (default: "*")
+  - Returns a list of matching keys
 
-#### Observability
-- `get_pod_logs`: Retrieve container logs
-  - Takes `pod_name`, `namespace` (default: "default"), optional `container`, and `tail_lines` (default: 100)
-  - Returns pod logs
-
-- `describe_resource`: Get detailed resource information
-  - Takes `resource_type`, `name`, and `namespace` (default: "default")
-  - Returns detailed JSON description of the resource
-
-- `get_namespaces`: List all namespaces
-  - Returns JSON array of namespace information
-
-#### Advanced Features
-- `apply_manifest_from_url`: Apply Kubernetes manifests from URLs
-  - Takes `url` and optional `namespace` (default: "default")
-  - Downloads and applies the manifest file
+- `delete_key`: Delete a specified key
+  - Takes a `key` (string)
+  - Returns the number of keys deleted (0 or 1)
 
 ## Configuration
 
-The server automatically configures Kubernetes client using:
-1. In-cluster configuration (when running inside Kubernetes)
-2. Local kubeconfig file (when running locally)
+The server connects to Redis using the following environment variables (all are required):
+
+- `REDIS_HOST`: Redis host  
+- `REDIS_PORT`: Redis port  
+- `REDIS_DB`: Redis database number  
+- `REDIS_PASSWORD`: Redis password  
+
+If any of these variables are missing, the server will raise an error during startup. Make sure to set each of these before running the server.
 
 ## Quickstart
 
 #### Claude Desktop
 
-On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
+On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`  
 On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 
 ```json
 {
-  "kubernetes": {
+  "redis": {
     "command": "uvx",
     "args": [
-      "mcp-server-k8s"
+      "mcp-server-redis"
     ]
   }
 }
@@ -103,7 +96,7 @@ experience, we strongly recommend using the [MCP Inspector](https://github.com/m
 You can launch the MCP Inspector via [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) with this command:
 
 ```bash
-npx @modelcontextprotocol/inspector uv --directory $(PWD) run mcp-server-k8s
+npx @modelcontextprotocol/inspector uv --directory $(PWD) run mcp-server-redis
 ```
 
 Upon launching, the Inspector will display a URL that you can access in your browser to begin debugging.

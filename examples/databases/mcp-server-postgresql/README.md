@@ -5,6 +5,8 @@
 
 This repository is an example of how to create an MCP server for managing PostgreSQL databases.
 
+[![PyPI version](https://badge.fury.io/py/mcp-server-postgresql.svg)](https://pypi.org/project/mcp-server-postgresql/)
+
 ## Overview
 
 A Model Context Protocol server for interacting with PostgreSQL. It provides tools for executing queries, creating tables, inserting rows of data, and retrieving results.
