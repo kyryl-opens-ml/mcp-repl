@@ -1,0 +1,22 @@
+[project]
+name = "mcp-server-mysql"
+version = "0.1.2"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "truskovskiyk", email = "truskovskiyk@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "kubernetes>=32.0.1",
+    "mcp[cli]>=1.4.1",
+    "mysql>=0.0.3",
+    "pydantic-settings>=2.8.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+mcp-server-mysql = "mcp_server_mysql:main"
