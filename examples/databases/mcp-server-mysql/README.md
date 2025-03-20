@@ -4,6 +4,8 @@
 
 This repository is an example of how to create an MCP server for managing MySQL databases.
 
+[![PyPI version](https://badge.fury.io/py/mcp-server-mysql.svg)](https://pypi.org/project/mcp-server-mysql/)
+
 ## Overview
 
 A Model Context Protocol server for interacting with a MySQL database. It provides tools for executing queries, creating and describing tables, inserting and fetching data, as well as listing existing tables.
@@ -42,12 +44,15 @@ The server implements the following tools:
 
 ## Configuration
 
-The MCP server automatically connects to a local or remote MySQL database using parameters configured in the code. By default, it looks for environment variables or uses the sample credentials in the server code:
-- Host: localhost
-- Port: 3306
-- User: root
-- Password: mysql
-- Database: mydatabase
+The MCP server connects to a MySQL database using environment variables. You need to set the following environment variables before running the server:
+
+- `MYSQL_HOST`: MySQL server hostname
+- `MYSQL_PORT`: MySQL server port
+- `MYSQL_USER`: MySQL username
+- `MYSQL_PASSWORD`: MySQL password
+- `MYSQL_DATABASE`: MySQL database name
+
+These settings are loaded using Pydantic's BaseSettings, which will raise an error if the required environment variables are not set.
 
 ## Quickstart
 

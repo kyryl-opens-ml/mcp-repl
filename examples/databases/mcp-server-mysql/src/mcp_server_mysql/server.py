@@ -1,18 +1,26 @@
 import mysql.connector
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
-MYSQL_HOST = "localhost"
-MYSQL_PORT = "3306"
-MYSQL_USER = "root"
-MYSQL_PASSWORD = "mysql"
-MYSQL_DATABASE = "mydatabase"
+class MySQLSettings(BaseSettings):
+    MYSQL_HOST: str = Field(description="MySQL host")
+    MYSQL_PORT: str = Field(description="MySQL port")
+    MYSQL_USER: str = Field(description="MySQL user")
+    MYSQL_PASSWORD: str = Field(description="MySQL password")
+    MYSQL_DATABASE: str = Field(description="MySQL database name")
+
+try:
+    settings = MySQLSettings()
+except Exception as e:
+    raise ValueError(f"Failed to load MySQL settings: {e}")
 
 conn = mysql.connector.connect(
-    host=MYSQL_HOST,
-    port=MYSQL_PORT,
-    user=MYSQL_USER,
-    password=MYSQL_PASSWORD,
-    database=MYSQL_DATABASE,
+    host=settings.MYSQL_HOST,
+    port=settings.MYSQL_PORT,
+    user=settings.MYSQL_USER,
+    password=settings.MYSQL_PASSWORD,
+    database=settings.MYSQL_DATABASE,
 )
 conn.autocommit = False
 
