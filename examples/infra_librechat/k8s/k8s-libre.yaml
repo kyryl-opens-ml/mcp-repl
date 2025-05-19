@@ -1,0 +1,148 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: librechat-env
+type: Opaque
+stringData:
+  .env: |
+    HOST=0.0.0.0
+    PORT=3080
+    MONGO_URI=mongodb://mongo:27017/librechat
+    DOMAIN_CLIENT=http://localhost:3080
+    DOMAIN_SERVER=http://localhost:3080
+    NO_INDEX=true
+    TRUST_PROXY=1
+    CONSOLE_JSON=false
+    DEBUG_LOGGING=true
+    DEBUG_CONSOLE=false
+    DEBUG_OPENAI=false
+    DEBUG_PLUGINS=false
+    CREDS_KEY=f34be427ebb29de8d88c107a71546019685ed8b241d8f2ed00c3df97ad2566f0
+    CREDS_IV=e2341419ec3dd3d19b13a1a87fafcbfb
+    SEARCH=false
+    MEILI_NO_ANALYTICS=true
+    ALLOW_EMAIL_LOGIN=true
+    ALLOW_REGISTRATION=true
+    ALLOW_SOCIAL_LOGIN=true
+    ALLOW_SOCIAL_REGISTRATION=true
+    ALLOW_UNVERIFIED_EMAIL_LOGIN=true
+    SESSION_EXPIRY=1000 * 60 * 15 * 10
+    REFRESH_TOKEN_EXPIRY=(1000 * 60 * 60 * 24) * 7
+    JWT_SECRET=16f8c0ef4a5d391b26034086c628469d3f9f497f08163ab9b40137092f2909ef
+    JWT_REFRESH_SECRET=eaa5191f2914e30b9387fd84e254e4ba6fc51b4654968a9b0803b456a54b8418
+    APP_TITLE=ScoreInforce
+    CUSTOM_FOOTER=ScoreInforce
+    HELP_AND_FAQ_URL=https://scoreinforce.com/
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: librechat-config
+data:
+  librechat.yaml: |
+    version: 1.2.1
+    mcpServers:
+      k8s:
+        url: http://k8s-manager.default.svc.cluster.local:8000/sse
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:6.0
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongo-data
+          mountPath: /data/db
+      volumes:
+      - name: mongo-data
+        persistentVolumeClaim:
+          claimName: mongo-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  selector:
+    app: mongo
+  ports:
+  - port: 27017
+    targetPort: 27017
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: librechat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: librechat
+  template:
+    metadata:
+      labels:
+        app: librechat
+    spec:
+      containers:
+      - name: librechat
+        image: ghcr.io/danny-avila/librechat-dev:latest
+        ports:
+        - containerPort: 3080
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-api-key
+              key: OPENAI_API_KEY
+        volumeMounts:
+        - name: env-volume
+          mountPath: /app/.env
+          subPath: .env
+        - name: config-volume
+          mountPath: /app/librechat.yaml
+          subPath: librechat.yaml
+      volumes:
+      - name: env-volume
+        secret:
+          secretName: librechat-env
+      - name: config-volume
+        configMap:
+          name: librechat-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: librechat
+spec:
+  selector:
+    app: librechat
+  ports:
+  - port: 3080
+    targetPort: 3080
+  type: ClusterIP
