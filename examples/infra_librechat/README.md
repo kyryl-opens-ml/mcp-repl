@@ -3,8 +3,10 @@
 Demo that spins up LibreChat UI, a K8s MCP server, and a broken NGINX deployment (typo'd image), then lets you fix it via chat.
 
 Prerequisites:
-- kubectl & kind & uv
-- OPENAI_API_KEY env var
+- [kubectl](https://kubernetes.io/docs/reference/kubectl/)
+- [kind](https://kind.sigs.k8s.io/)
+- [uv](https://github.com/astral-sh/uv)
+- OPENAI_API_KEY or equivalent
 
 Quickstart:
 
