@@ -37,6 +37,8 @@ uv run mcp-repl --config path/to/config.json
 
 - **[Databases](./examples/databases/)** - Database administrators: See how to query, monitor, and manage your databases with natural language
 - **[Infrastructure](./examples/infra/)** - DevOps engineers: Explore examples for managing cloud resources, monitoring systems, and automating infrastructure tasks
+- **[Self-Healing K8s Agent with LibreChat + MCP](./examples/infra_librechat/)** - K8S Agent
+
 
 Each example includes sample configurations and common usage patterns to help you get started quickly.
 
