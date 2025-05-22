@@ -235,7 +235,7 @@ k8s_mcp.mcp.run(transport='sse')
             )
         ],
         command=["/bin/sh", "-c"],
-        args=["cd /app && python -m pip install kubernetes mcp[cli] && python run.py"]
+        args=["cd /app && python -m pip install kubernetes==32.0.1 mcp[cli]==1.9.1 && python run.py"]
     )
     
     template = client.V1PodTemplateSpec(
