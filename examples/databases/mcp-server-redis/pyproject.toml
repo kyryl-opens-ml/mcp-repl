@@ -1,0 +1,21 @@
+[project]
+name = "mcp-server-redis"
+version = "0.1.1"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "truskovskiyk", email = "truskovskiyk@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "mcp[cli]>=1.4.1",
+    "pydantic-settings>=2.8.1",
+    "redis>=5.2.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+mcp-server-redis = "mcp_server_redis:main"
